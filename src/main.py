@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
         data = import_results(config)
 
-        updated_weights, mse = update_weights(
+        updated_weights, mse_val, mse_trn = update_weights(
             data,
             y_test,
             y_train, 
@@ -42,10 +42,8 @@ if __name__ == "__main__":
             config["simulation"]["learning_rate"]
         )
 
-
-
         config["simulation"]["weights"] = updated_weights
-        print(f"Epoch {epoch}, MSE: {mse}")
+        print(f"Epoch {epoch}, MSE val: {mse_val}, MSE trn: {mse_trn}")
 
         
     print("Simulation finished!")

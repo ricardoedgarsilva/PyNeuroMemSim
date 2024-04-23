@@ -415,7 +415,8 @@ def update_weights(data, validation_output, true_output, weights, learning_rate)
         val_output.append(layer[:len(validation_output)])
         output.append(layer[len(validation_output):])
     
-    mse = calculate_mse(validation_output, val_output[-1])
+    mse_val = calculate_mse(validation_output, val_output[-1])
+    mse_trn = calculate_mse(true_output, output[-1])
 
     def sigmoid_derivative(x): return x * (1 - x)
         
@@ -436,6 +437,6 @@ def update_weights(data, validation_output, true_output, weights, learning_rate)
     for i in range(len(weights)):     
         weights[i] -= output[i].T.dot(layer_deltas[i]) * learning_rate
 
-    return weights, mse
+    return weights, mse_val, mse_trn
 
 
