@@ -1,5 +1,6 @@
 import numpy as np
-
+from tqdm import tqdm
+import time
 
 from modules.netlist import Netlist
 from modules.common import *
@@ -26,6 +27,7 @@ if __name__ == "__main__":
     print_information(config)
 
     for epoch in range(config["simulation"]["epochs"]):
+        start_time = time.time()
 
         netlist.mk_circuit(config)
         netlist.save_net(config)
@@ -34,16 +36,22 @@ if __name__ == "__main__":
 
         data = import_results(config)
 
-        updated_weights, mse_val, mse_trn = update_weights(
-            data,
-            y_test,
-            y_train, 
-            config["simulation"]["weights"], 
+        val_data, trn_data = split_data(data, len(x_test))
+
+        mse_trn = calculate_mse(y_train, trn_data[-1])
+        mse_val = calculate_mse(y_test, val_data[-1])
+
+        updated_weights = backpropagate(
+            trn_data,
+            y_train,
+            config["simulation"]["weights"],
             config["simulation"]["learning_rate"]
         )
 
         config["simulation"]["weights"] = updated_weights
-        print(f"Epoch {epoch}, MSE val: {mse_val}, MSE trn: {mse_trn}")
+
+        ttime = np.round(time.time() - start_time, 2)
+        print(f"Epoch {epoch}, MSE val: {mse_val}, MSE trn: {mse_trn}, Time: {ttime} s")
 
         
     print("Simulation finished!")

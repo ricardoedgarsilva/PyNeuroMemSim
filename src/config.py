@@ -10,14 +10,14 @@ config = {
         "vin_scale" : 1,
         "vout_scale": 1e3,
         "epochs"    : 50,
-        "learning_rate" : 1e-4
+        "learning_rate" : 1e-5
     },
     "opamp":{
         "power" : 1,
         "noninverting" : 0
     },
     "resistor":{
-        "A" : 1e3,
+        "A" : 1e2,
         "B" : 1e3,
         "C" : 1e3
     },

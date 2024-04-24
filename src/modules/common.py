@@ -42,13 +42,13 @@ def ensure_directory_is_src():
 
 def print_information(config: dict):
     print(
-        text2art("PCSLTS"),
-        "Python Crossbar Simulator with LTSpice\n",
+        text2art("PyNeuroMemSim"),
+        "Fully Connected Memristor based Neural Network Simulator\n",
         f"\n {10 * '-'} \n \n",
         "Author: Ricardo E. Silva\n",
         "Research Group: INESC MN\n",
         "Licence: MIT\n",
-        "Version: 0.1\n",
+        "Version: 0.2\n",
         f"\n {10 * '-'} \n",
         1 * "\n\n\n",
         "Configuration: \n"
@@ -324,8 +324,6 @@ def run_ltspice(config, mode="-b"):
     except Exception as e:
         print(f"An error occurred while running LTspice: {e}")
 
-#-------- Needs documentation and improvement
-
 def import_results(config):
     """
     Import simulation results from an LTspice simulation.
@@ -406,26 +404,27 @@ def calculate_mse(actual, predicted):
     mse_value = error / len(actual)
     return np.mean(mse_value).round(3)
 
+#-------- Needs documentation and improvement
 
-def update_weights(data, validation_output, true_output, weights, learning_rate):
-
-    val_output, output = [], []
+def split_data(data, val_len):
+    val_data, trn_data = [], []
 
     for layer in data:
-        val_output.append(layer[:len(validation_output)])
-        output.append(layer[len(validation_output):])
+        val_data.append(layer[:val_len])
+        trn_data.append(layer[val_len:])
     
-    mse_val = calculate_mse(validation_output, val_output[-1])
-    mse_trn = calculate_mse(true_output, output[-1])
+    return val_data, trn_data
+
+def backpropagate(trn_data, trn_out, weights, learning_rate):
 
     def sigmoid_derivative(x): return x * (1 - x)
-        
-    layer_errors = [true_output - output[-1]]
-    layer_deltas = [layer_errors[0] * sigmoid_derivative(output[-1])]
+
+    layer_errors = [trn_out - trn_data[-1]]
+    layer_deltas = [layer_errors[0] * sigmoid_derivative(trn_data[-1])]
 
     for i in range(len(weights) - 1, 0, -1):
         error = layer_deltas[-1].dot(weights[i].T)
-        delta = error * sigmoid_derivative(output[i])
+        delta = error * sigmoid_derivative(trn_data[i])
         layer_errors.append(error)
         layer_deltas.append(delta)
 
@@ -434,9 +433,11 @@ def update_weights(data, validation_output, true_output, weights, learning_rate)
     layer_deltas.reverse()
 
     # Update weights
-    for i in range(len(weights)):     
-        weights[i] -= output[i].T.dot(layer_deltas[i]) * learning_rate
+    for i in range(len(weights)): 
+        # For some reason it needs to be negative, otherwise the error increases    
+        weights[i] += -1 * trn_data[i].T.dot(layer_deltas[i]) * learning_rate
 
-    return weights, mse_val, mse_trn
+    return weights
+
 
 
