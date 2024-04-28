@@ -8,9 +8,10 @@ import ltspice
 import numpy as np
 import pandas as pd
 
+
 from art import text2art
 from scipy.interpolate import interp1d
-
+from matplotlib import pyplot as plt
 
 ### Functions
 
@@ -179,7 +180,7 @@ def import_data(config):
         module = importlib.import_module("import_data")
         impdt = getattr(module, "import_data")
 
-        x_train, y_train, x_test, y_test = impdt(config["simulation"]["test_size"], config["simulation"]["geometry"])
+        x_train, y_train, x_test, y_test = impdt(config["simulation"]["test_size"])
 
         # Add data shape to the configuration
         config["data_shape"] = {}
@@ -435,9 +436,39 @@ def backpropagate(trn_data, trn_out, weights, learning_rate):
     # Update weights
     for i in range(len(weights)): 
         # For some reason it needs to be negative, otherwise the error increases    
-        weights[i] += -1 * trn_data[i].T.dot(layer_deltas[i]) * learning_rate
+        weights[i] += trn_data[i].T.dot(layer_deltas[i]) * learning_rate
 
     return weights
 
+def create_csv(config: dict):
+
+    savedir = config["simulation"]["savedir"]
+    csv_path = os.path.join(savedir, "mse_hist.csv")
 
 
+    with open(csv_path, "w") as f:
+        f.write("epoch,mse_val,mse_trn\n")
+        f.close()
+    
+def save_mse_hist(config: dict, epoch, mse_val, mse_trn):
+    savedir = config["simulation"]["savedir"]
+    csv_path = os.path.join(savedir, "mse_hist.csv")
+    
+    with open(csv_path, "a") as f:
+        f.write(f"{epoch},{mse_val},{mse_trn}\n")
+        f.close()
+
+
+def plot_mse(config: dict):
+
+    savedir = config["simulation"]["savedir"]
+    csv_path = os.path.join(savedir, "mse_hist.csv")
+
+    data = pd.read_csv(csv_path)
+
+    plt.plot(data["epoch"], data["mse_val"], label="Validation")
+    plt.plot(data["epoch"], data["mse_trn"], label="Training")
+    plt.xlabel("Epoch")
+    plt.ylabel("MSE")
+    plt.legend()
+    plt.show()

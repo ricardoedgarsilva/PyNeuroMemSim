@@ -24,6 +24,8 @@ if __name__ == "__main__":
     config["simulation"]["time"] = calculate_time(len(x_train), len(x_test), config)
     config["simulation"]["weights"] = initialize_weights(config)
 
+    create_csv(config)
+
     print_information(config)
 
     for epoch in range(config["simulation"]["epochs"]):
@@ -51,7 +53,9 @@ if __name__ == "__main__":
         config["simulation"]["weights"] = updated_weights
 
         ttime = np.round(time.time() - start_time, 2)
+        save_mse_hist(config, epoch, mse_trn, mse_val)
         print(f"Epoch {epoch}, MSE val: {mse_val}, MSE trn: {mse_trn}, Time: {ttime} s")
 
         
     print("Simulation finished!")
+    plot_mse(config)

@@ -3,7 +3,7 @@ from ucimlrepo import fetch_ucirepo
 from sklearn.model_selection import train_test_split
   
 
-def import_data(test_size:float, crossbar:dict=None):  
+def import_data(test_size:float):  
     # fetch dataset 
     wine_quality = fetch_ucirepo(id=186)
 
@@ -33,4 +33,5 @@ def import_data(test_size:float, crossbar:dict=None):
 
 if __name__ == "__main__":
     import_data(0.2, None)
+
 
