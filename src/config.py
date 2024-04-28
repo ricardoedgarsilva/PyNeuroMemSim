@@ -13,8 +13,8 @@ config = {
         "learning_rate" : 1e-3
     },
     "opamp":{
-        "power" : 1,
-        "noninverting" : 0
+        "power" : 2,
+        "noninverting" : 0.3
     },
     "resistor":{
         "A" : 1e2,

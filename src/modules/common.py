@@ -436,7 +436,8 @@ def backpropagate(trn_data, trn_out, weights, learning_rate):
     # Update weights
     for i in range(len(weights)): 
         # For some reason it needs to be negative, otherwise the error increases    
-        weights[i] += trn_data[i].T.dot(layer_deltas[i]) * learning_rate
+        # weights[i] += trn_data[i].T.dot(layer_deltas[i]) * learning_rate
+        weights[i] -= trn_data[i].T.dot(layer_deltas[i]) * learning_rate
 
     return weights
 
