@@ -1,8 +1,8 @@
 config = {
     "simulation":{
         "save"  : rf"C:\Users\ricar\Desktop\results",
-        "dataset"   : "wqpt",
-        "geometry": [[11,14],[14,10]],
+        "dataset"   : "satdap",
+        "geometry": [[36,15],[15,3]],
         "test_size" : 0.2,
         "timestep"  : 1e-9,
         "freq"      : 1e9,
@@ -10,14 +10,14 @@ config = {
         "vin_scale" : 1,
         "vout_scale": 1e3,
         "epochs"    : 50,
-        "learning_rate" : 1e-4
+        "learning_rate" : 1e-3
     },
     "opamp":{
         "power" : 1,
         "noninverting" : 0
     },
     "resistor":{
-        "A" : 1e3,
+        "A" : 1e2,
         "B" : 1e3,
         "C" : 1e3
     },

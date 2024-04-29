@@ -180,7 +180,6 @@ class Netlist:
             with open(os.path.join(savedir, "circuit.cir"), "w") as file:
                 for line in self.circuit:
                     file.write(f"{line}\n")
-            print(f"Netlist saved in {os.path.join(savedir, 'circuit.cir')}")
         except OSError as e:
             print(f"Error saving netlist: {e}")
 
