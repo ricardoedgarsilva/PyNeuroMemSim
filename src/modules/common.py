@@ -49,7 +49,7 @@ def print_information(config: dict):
         "Author: Ricardo E. Silva\n",
         "Research Group: INESC MN\n",
         "Licence: MIT\n",
-        "Version: 0.2\n",
+        "Version: 0.3\n",
         f"\n {10 * '-'} \n",
         1 * "\n\n\n",
         "Configuration: \n"
@@ -423,7 +423,7 @@ def backpropagate(trn_data, trn_out, weights, learning_rate):
     layer_errors = [trn_out - trn_data[-1]]
     layer_deltas = [layer_errors[0] * sigmoid_derivative(trn_data[-1])]
 
-    for i in range(len(weights) - 1, 0, -1):
+    for i in range(len(weights) - 1, -1, -1):
         error = layer_deltas[-1].dot(weights[i].T)
         delta = error * sigmoid_derivative(trn_data[i])
         layer_errors.append(error)
@@ -433,11 +433,17 @@ def backpropagate(trn_data, trn_out, weights, learning_rate):
     layer_errors.reverse()
     layer_deltas.reverse()
 
+    layer_deltas.pop(0)
+    layer_errors.pop(0)
+
     # Update weights
     for i in range(len(weights)): 
-        # For some reason it needs to be negative, otherwise the error increases    
-        # weights[i] += trn_data[i].T.dot(layer_deltas[i]) * learning_rate
-        weights[i] -= trn_data[i].T.dot(layer_deltas[i]) * learning_rate
+        mean_delta = np.mean(np.mean(layer_deltas[i], axis=0))
+
+        if mean_delta < 0:  signal = 1
+        else:   signal = -1
+
+        weights[i] += signal * trn_data[i].T.dot(layer_deltas[i]) * learning_rate
 
     return weights
 
@@ -472,4 +478,28 @@ def plot_mse(config: dict):
     plt.xlabel("Epoch")
     plt.ylabel("MSE")
     plt.legend()
+
+    # Save the plot
+    plt.savefig(os.path.join(savedir, "mse_hist.png"))
     plt.show()
+
+
+def copy_config_to_log(config: dict):
+    savedir = config["simulation"]["savedir"]
+
+    key_exclusions = ['weights','subcircuits']
+
+    def print_dict_with_titles(f, d):
+        for key, value in d.items():
+            if key in key_exclusions:
+                continue
+            elif isinstance(value, dict):
+                f.write(f"\n\n---- {key} ----")
+                print_dict_with_titles(f, value)  # Recursive call to handle nested dictionaries
+            else:
+                f.write(f"\n{key}: {value}")
+    
+
+    with open(os.path.join(savedir, "config.log"), "w") as f:
+        print_dict_with_titles(f, config)
+        f.close()

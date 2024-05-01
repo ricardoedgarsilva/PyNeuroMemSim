@@ -1,11 +1,10 @@
-import numpy as np
-from tqdm import tqdm
 import time
+import numpy as np
 
+from tqdm import tqdm
 from modules.netlist import Netlist
 from modules.common import *
 from config import *
-
 
 if __name__ == "__main__":
 
@@ -27,6 +26,7 @@ if __name__ == "__main__":
     create_csv(config)
 
     print_information(config)
+    copy_config_to_log(config)
 
     ltime = []
     for epoch in range(config["simulation"]["epochs"]):
