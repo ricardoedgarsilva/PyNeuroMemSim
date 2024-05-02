@@ -506,12 +506,23 @@ def copy_config_to_log(config: dict):
 
 def plot_weight_evolution(config: dict, weights: list):
 
-    for layer in weights:
+    for layer_idx, layer in enumerate(weights):
         fig, ax = plt.subplots()
         cax = ax.matshow(layer, interpolation='nearest', cmap='bwr', vmin=-1, vmax=1)
         fig.colorbar(cax)
 
-        
+        def update(epoch):
+            cax.set_data(layer[epoch])
+            ax.set_title(f'Epoch {epoch}')
+            return cax,
+
+        ani = FuncAnimation(fig, update, frames=config['simulation']['epochs'], repeat=True)
+
+
+        path = os.path.join(config["simulation"]["savedir"], "weight_evolution" ,f"l{layer_idx}_weights.mp4")
+        ani.save(f'l{layer_idx}_wevo.mp4', writer='ffmpeg')
+
+
 
 
 

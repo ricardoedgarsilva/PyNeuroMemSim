@@ -29,6 +29,11 @@ if __name__ == "__main__":
     copy_config_to_log(config)
 
     ltime = []
+    lweights = [ [] for _ in range(len(config["simulation"]["geometry"])) ]
+
+    for layer_idx, layer in enumerate(config["simulation"]["weights"]):
+            lweights[layer_idx].append(layer)
+
     for epoch in range(config["simulation"]["epochs"]):
         start_time = time.time()
 
@@ -54,6 +59,9 @@ if __name__ == "__main__":
 
         config["simulation"]["weights"] = updated_weights
 
+        for layer_idx, layer in enumerate(config["simulation"]["weights"]):
+                lweights[layer_idx].append(layer)
+
         ltime.append(np.round(time.time() - start_time, 2))
         etime = np.round(np.mean(ltime) * (config["simulation"]["epochs"] - epoch), 2)	
         save_mse_hist(config, epoch, mse_trn, mse_val)
@@ -61,4 +69,5 @@ if __name__ == "__main__":
 
         
     print("Simulation finished!")
+    plot_weight_evolution(config, lweights)
     plot_mse(config)

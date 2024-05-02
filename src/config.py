@@ -9,7 +9,7 @@ config = {
         "freq"      : 1e8,
         "precision" : 10,
         "epochs"    : 50,
-        "learning_rate" : 3e-4
+        "learning_rate" : 6e-4
     },
     "opamp":{
         "power" : 1,
