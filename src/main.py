@@ -45,6 +45,7 @@ if __name__ == "__main__":
         mse_val = calculate_mse(y_test, val_data[-1])
 
         updated_weights = backpropagate(
+            config,
             trn_data,
             y_train,
             config["simulation"]["weights"],

@@ -11,7 +11,8 @@ import pandas as pd
 
 from art import text2art
 from scipy.interpolate import interp1d
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 ### Functions
 
@@ -416,9 +417,9 @@ def split_data(data, val_len):
     
     return val_data, trn_data
 
-def backpropagate(trn_data, trn_out, weights, learning_rate):
+def backpropagate(config, trn_data, trn_out, weights, learning_rate):
 
-    def sigmoid_derivative(x): return x * (1 - x)
+    def sigmoid_derivative(x): return x * (1 - x) * config["opamp"]["power"]
 
     layer_errors = [trn_out - trn_data[-1]]
     layer_deltas = [layer_errors[0] * sigmoid_derivative(trn_data[-1])]
@@ -438,12 +439,13 @@ def backpropagate(trn_data, trn_out, weights, learning_rate):
 
     # Update weights
     for i in range(len(weights)): 
-        mean_delta = np.mean(np.mean(layer_deltas[i], axis=0))
 
-        if mean_delta < 0:  signal = 1
-        else:   signal = -1
+        dif =  trn_data[i].T.dot(layer_deltas[i])
+        
+        if np.mean(layer_deltas[i]) <= 0: sign = 1
+        else: sign = -1
 
-        weights[i] += signal * trn_data[i].T.dot(layer_deltas[i]) * learning_rate
+        weights[i] += learning_rate * sign * dif
 
     return weights
 
@@ -465,7 +467,6 @@ def save_mse_hist(config: dict, epoch, mse_val, mse_trn):
         f.write(f"{epoch},{mse_val},{mse_trn}\n")
         f.close()
 
-
 def plot_mse(config: dict):
 
     savedir = config["simulation"]["savedir"]
@@ -482,7 +483,6 @@ def plot_mse(config: dict):
     # Save the plot
     plt.savefig(os.path.join(savedir, "mse_hist.png"))
     plt.show()
-
 
 def copy_config_to_log(config: dict):
     savedir = config["simulation"]["savedir"]
@@ -503,3 +503,16 @@ def copy_config_to_log(config: dict):
     with open(os.path.join(savedir, "config.log"), "w") as f:
         print_dict_with_titles(f, config)
         f.close()
+
+def plot_weight_evolution(config: dict, weights: list):
+
+    for layer in weights:
+        fig, ax = plt.subplots()
+        cax = ax.matshow(layer, interpolation='nearest', cmap='bwr', vmin=-1, vmax=1)
+        fig.colorbar(cax)
+
+        
+
+
+
+    
