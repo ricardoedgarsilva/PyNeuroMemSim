@@ -508,7 +508,7 @@ def plot_weight_evolution(config: dict, weights: list):
 
     for layer_idx, layer in enumerate(weights):
         fig, ax = plt.subplots()
-        cax = ax.matshow(layer, interpolation='nearest', cmap='bwr', vmin=-1, vmax=1)
+        cax = ax.matshow(layer, interpolation='nearest', cmap='bwr', vmin=0, vmax=1)
         fig.colorbar(cax)
 
         def update(epoch):
