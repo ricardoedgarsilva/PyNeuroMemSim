@@ -2,13 +2,12 @@ config = {
     "simulation":{
         "save"  : rf"C:\Users\ricar\Desktop\results",
         "dataset"   : "satdap",
-        # "geometry": [[36,18],[18,6],[6,3]],
-        "geometry": [[36,3]],
+        "geometry": [[36,18],[18,6],[6,3]],
         "test_size" : 0.1,
         "timestep"  : 1e-8,
         "freq"      : 1e8,
         "precision" : 10,
-        "epochs"    : 50,
+        "epochs"    : 3,
         "learning_rate" : 6e-4
     },
     "opamp":{

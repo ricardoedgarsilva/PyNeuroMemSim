@@ -8,31 +8,34 @@ from config import *
 
 if __name__ == "__main__":
 
+    # Ensure that the save directory is in the src folder
     ensure_directory_is_src()
 
+    # Create save directory
     config['simulation']['savedir'] = create_save_directory(
         config['simulation']['save']
     )
     
     # Create Netlist object
     netlist = Netlist()
+
     # Import data and create inputs
     x_train, y_train, x_test, y_test = import_data(config)
     create_inputs(x_train, x_test, config)
 
+    # Calculate simulation time and initialize weights
     config["simulation"]["time"] = calculate_time(len(x_train), len(x_test), config)
     config["simulation"]["weights"] = initialize_weights(config)
 
-    create_csv(config)
+    # Create MSE history CSV file and weight history HDF5 file
+    create_mse_hist(config)
 
-    print_information(config)
-    copy_config_to_log(config)
+    # Print configuration and save config.log
+    printlog_info(config)
 
+    # Initialize list to store time
     ltime = []
-    lweights = [ [] for _ in range(len(config["simulation"]["geometry"])) ]
 
-    for layer_idx, layer in enumerate(config["simulation"]["weights"]):
-            lweights[layer_idx].append(layer)
 
     for epoch in range(config["simulation"]["epochs"]):
         start_time = time.time()
@@ -59,15 +62,12 @@ if __name__ == "__main__":
 
         config["simulation"]["weights"] = updated_weights
 
-        for layer_idx, layer in enumerate(config["simulation"]["weights"]):
-                lweights[layer_idx].append(layer)
 
         ltime.append(np.round(time.time() - start_time, 2))
         etime = np.round(np.mean(ltime) * (config["simulation"]["epochs"] - epoch), 2)	
-        save_mse_hist(config, epoch, mse_trn, mse_val)
+        append_mse_hist(config, epoch, mse_trn, mse_val)
         print(f"Epoch {epoch}, MSE val: {mse_val}, MSE trn: {mse_trn}, Time: {ltime[-1]} s, ETA: {etime} s")
 
         
     print("Simulation finished!")
-    plot_weight_evolution(config, lweights)
-    plot_mse(config)
+    plot_mse_hist(config)
