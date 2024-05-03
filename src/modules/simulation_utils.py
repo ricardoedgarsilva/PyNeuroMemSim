@@ -14,6 +14,8 @@ def run_ltspice(config: dict, mode="-b"):
     None
     """
 
+    print("\rRunning LTspice simulation...", end=' ')
+
     circuit_path = os.path.join(config["simulation"]["savedir"], "circuit.cir")
 
     
@@ -22,6 +24,10 @@ def run_ltspice(config: dict, mode="-b"):
             raise ValueError("Invalid mode. Use '-b' for background or '' for foreground.")
 
         subprocess.run(["ltspice", mode, circuit_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        print("\rLTspice simulation completed.", end=' ')
+
+
     except Exception as e:
         print(f"An error occurred while running LTspice: {e}")
 
@@ -46,6 +52,7 @@ def import_results(config):
           geometry, containing voltage data for each column at specified intervals.
     """
 
+    print("\rImporting LTspice simulation results...", end=' ')
 
     # Extract configuration details
     save_dir = config['simulation']['savedir']
@@ -82,6 +89,7 @@ def import_results(config):
         f = interp1d(time_data, voltage_data)
         results[-1][:,col] = f(time_list)
 
+    print("\rLTspice simulation results imported.", end=' ')
 
     return results
 

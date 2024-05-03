@@ -2,20 +2,20 @@ config = {
     "simulation":{
         "save"  : rf"C:\Users\ricar\Desktop\results",
         "dataset"   : "satdap",
-        "geometry": [[36,3]],
+        "geometry": [[36,16],[16,6],[6,3]],
         "test_size" : 0.1,
         "timestep"  : 1e-8,
         "freq"      : 1e8,
         "precision" : 10,
-        "epochs"    : 3,
+        "epochs"    : 50,
         "learning_rate" : 6e-4
     },
     "opamp":{
         "power" : 1,
-        "noninverting" : 0.5 # Crashing LTSpice solver if > 0.2
+        "noninverting" : 0.1 # Crashing LTSpice solver if > 0.2
     },
     "resistor":{
-        "A" : 50,
+        "A" : 1e2,
         "B" : 1e3,
         "C" : 1e3
     },

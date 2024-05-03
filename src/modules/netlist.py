@@ -77,6 +77,8 @@ class Netlist:
         config (dict): Configuration dictionary for the circuit.
         """
 
+        print("\rCreating circuit...", end=' ')
+
         # Clear the circuit
         self.circuit = []
 
@@ -166,6 +168,8 @@ class Netlist:
         self.add_save(config)
         self.add_end()
 
+        print("\rCircuit created!", end=' ')
+
     def save_net(self, config):
         """
         Save the constructed netlist to a file.
@@ -174,12 +178,16 @@ class Netlist:
         config (dict): Configuration dictionary for the circuit.
         """
 
+        print("\rSaving netlist circuit file...", end=' ')
         savedir = config['simulation']['savedir']
 
         try:
             with open(os.path.join(savedir, "circuit.cir"), "w") as file:
                 for line in self.circuit:
                     file.write(f"{line}\n")
+
+            print("\rNetlist saved!", end=' ')
+
         except OSError as e:
             print(f"Error saving netlist: {e}")
 

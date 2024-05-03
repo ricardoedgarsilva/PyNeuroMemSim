@@ -40,6 +40,8 @@ if __name__ == "__main__":
     for epoch in range(config["simulation"]["epochs"]):
         start_time = time.time()
 
+        print(f"\n\r Epoch {epoch} cycle started ....", end=' ')
+
         netlist.mk_circuit(config)
         netlist.save_net(config)
 
@@ -64,7 +66,7 @@ if __name__ == "__main__":
         ltime.append(np.round(time.time() - start_time, 2))
         etime = np.round(np.mean(ltime) * (config["simulation"]["epochs"] - epoch), 2)	
         append_mse_hist(config, epoch, mse_trn, mse_val)
-        print(f"Epoch {epoch}, MSE val: {mse_val}, MSE trn: {mse_trn}, Time: {ltime[-1]} s, Time Remaining: {etime} s")
+        print(f"\rEpoch {epoch}, MSE val: {mse_val}, MSE trn: {mse_trn}, Time: {ltime[-1]} s, Time Remaining: {etime} s")
 
         
     print("Simulation finished!")

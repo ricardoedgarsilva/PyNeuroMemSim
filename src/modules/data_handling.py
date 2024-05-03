@@ -17,6 +17,8 @@ def import_data(config: dict):
     """
     
     try:
+        print("\rImporting data...", end=' ')
+
         data_path = os.path.join("..", "data", config["simulation"]["dataset"])
         sys.path.append(data_path)
 
@@ -64,6 +66,8 @@ def import_data(config: dict):
             pass
 
 
+        print("\rData imported successfully!", end=' ')
+
         return x_train, y_train, x_test, y_test
     except ImportError as ie:
         print(f"Error importing data module: {ie}")
@@ -93,6 +97,8 @@ def create_inputs(x_train, x_test, config):
     savedir = config["simulation"]["savedir"]
 
     try:
+        print("\rCreating input files...", end=' ')
+
         inputdir = os.path.join(savedir, "inputs")
         os.makedirs(inputdir, exist_ok=True)
         x = np.concatenate((x_test, x_train), axis=0)
@@ -104,6 +110,8 @@ def create_inputs(x_train, x_test, config):
             inputs_train["time"] = time
             inputs_train[f'IN{row}'] = [x[i][row] for i in range(len(x))]
             inputs_train.to_csv(os.path.join(inputdir, f"in{row}.csv"), index=False, header=False)
+        
+        print("\rInput files created successfully!", end=' ')
 
     except Exception as e:
         print(f"An error occurred while creating input files: {e}")
@@ -119,6 +127,9 @@ def calculate_mse(actual, predicted):
     Returns:
     - float: The mean squared error.
     """
+
+    print("\rCalculating Mean Squared Error...", end=' ')
+
     if len(actual) != len(predicted):
         raise ValueError(f"Both arrays must have the same length! {len(actual)} and {len(predicted)}")
     
@@ -126,6 +137,9 @@ def calculate_mse(actual, predicted):
     for a, p in zip(actual, predicted):
         error += (a - p) ** 2
     mse_value = error / len(actual)
+
+    print("\rMean Squared Error calculated successfully!", end=' ')
+
     return np.mean(mse_value).round(3)
 
 def calculate_time(len_xtrain, len_xtest, config):
@@ -140,6 +154,7 @@ def calculate_time(len_xtrain, len_xtest, config):
     Returns:
     float: The total time required for the simulation.
     """
+
     timestep = config["simulation"]["timestep"]
     
     return (len_xtrain + len_xtest) * timestep
@@ -165,9 +180,13 @@ def split_data(data, val_len):
                          initial `val_len` elements.
     """
 
+    print("\rSplitting imported data into validation/training ...", end=' ')
+
     # Use list comprehension for concise and efficient data splitting
     validation_data = [sequence[:val_len] for sequence in data]
     training_data = [sequence[val_len:] for sequence in data]
+
+    print("\rData split successfully!", end=' ')
 
     return validation_data, training_data
 
@@ -189,6 +208,8 @@ def create_mse_hist(config: dict):
     None
     """
 
+    print("\rCreating MSE history CSV file...", end=' ')
+
     # Extract the directory path from the configuration dictionary
     savedir = config["simulation"]["savedir"]
 
@@ -198,6 +219,8 @@ def create_mse_hist(config: dict):
     with open(csv_path, "w") as f:
         # Write the header of the CSV file
         f.write("epoch,mse_val,mse_trn\n")
+    
+    print("\rMSE history CSV file created successfully!", end=' ')
 
 def append_mse_hist(config: dict, epoch: int, mse_val: float, mse_trn: float):
     """
@@ -228,7 +251,7 @@ def append_mse_hist(config: dict, epoch: int, mse_val: float, mse_trn: float):
         # Write the new epoch data to the CSV file
         f.write(f"{epoch},{mse_val},{mse_trn}\n")
 
-#-------- Needs documentation and improvement
+#-------- Experimenting several backpropagation algorithms
 
 def backpropagate_matrix(config, trn_data, trn_out, weights, learning_rate):
 
@@ -278,6 +301,7 @@ def backpropagate(config: dict, output_data, target_data):
 
     # Loop in reverse order to backpropagate the error
     for layer in reversed(range(len(weights))):
+
         
         # Calculate the gradient for the current layer
         gradients[layer] = output_data[layer].T.dot(delta)
@@ -290,6 +314,36 @@ def backpropagate(config: dict, output_data, target_data):
     new_weights = [w - learning_rate * grad for w, grad in zip(weights, gradients)]
 
     return new_weights
+
+def backpropagate2(config: dict, output_data, target_data):
+    weights = config["simulation"]["weights"]
+    learning_rate = config["simulation"]["learning_rate"]
+
+    def sigmoid_derivative(x): 
+        return x * (1 - x) * config["opamp"]["power"]
+
+    # Initialize the list to store the gradient of weights for each layer
+    gradients = [np.zeros_like(w) for w in weights]
+
+    # Start with the output layer
+    error = output_data[-1] - target_data
+    delta = error * sigmoid_derivative(output_data[-1])
+
+    # Loop in reverse order to backpropagate the error
+    for layer in reversed(range(len(weights))):
+        # Calculate the gradient for the current layer using element-wise multiplication for delta and output
+        gradients[layer] = np.multiply.outer(delta, output_data[layer])
+
+        # Propagate the error backwards
+        if layer > 0:
+            # Calculate delta for next layer; re-adjust the shape for broadcasting, if necessary
+            delta = np.sum(delta[:, None, :] * weights[layer][None, :, :], axis=2) * sigmoid_derivative(output_data[layer])
+
+    # Update the weights using the calculated gradients element-wise
+    new_weights = [w - learning_rate * grad for w, grad in zip(weights, gradients)]
+
+    return new_weights
+
 
 #-------- Needs implementation
 

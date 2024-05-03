@@ -7,7 +7,8 @@ info = "\n".join([
     "Author: Ricardo E. Silva",
     "Research Group: INESC MN, Lisbon, Portugal",
     "Licence: MIT",
-    "Version: 0.3.3",
+    "Version: 0.3.4",
+    "Channel: Experimental",
     f" {10 * '-'} \n\n\n",
     "Configuration:"
 ])
@@ -23,4 +24,8 @@ Changelog:
 • 0.3.3: 
     - Fix bug in info.py importation
     - Major restructuring of common.py
+• 0.3.4:
+    - Adding prints with '\r' to show feedback
+    - Experimenting with different backpropagation
+    
 """

@@ -16,6 +16,8 @@ def printlog_info(config: dict):
     None
     """
 
+    print("\r", end='')
+
     # Define the directory to save the log file
     savedir = config["simulation"]["savedir"]
     # Keys to exclude from logging
