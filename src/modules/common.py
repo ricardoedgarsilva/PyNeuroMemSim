@@ -69,7 +69,7 @@ def printlog_info(config: dict):
         "Author: Ricardo E. Silva",
         "Research Group: INESC MN, Lisbon, Portugal",
         "Licence: MIT",
-        "Version: 0.3",
+        "Version: 0.3.1",
         f" {10 * '-'} \n\n\n",
         "Configuration:"
     ])
@@ -576,8 +576,7 @@ def append_weight_hist(config: dict, weights: list):
             dataset[current_size] = weight_array
 
 
-            
-
+        
 def backpropagate(config, trn_data, trn_out, weights, learning_rate):
 
     def sigmoid_derivative(x): return x * (1 - x) * config["opamp"]["power"]
