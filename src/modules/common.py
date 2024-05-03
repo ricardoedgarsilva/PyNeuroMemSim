@@ -9,8 +9,6 @@ import ltspice
 import numpy as np
 import pandas as pd
 
-
-from art import text2art
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
@@ -62,17 +60,7 @@ def printlog_info(config: dict):
     key_exclusions = ['weights', 'subcircuits']
 
     # Construct the header information for the log
-    info = "\n".join([
-        text2art("PyNeuroMemSim"),  # ASCII art title
-        "Fully Connected Memristor based Neural Network Simulator\n",
-        f" {10 * '-'} \n",
-        "Author: Ricardo E. Silva",
-        "Research Group: INESC MN, Lisbon, Portugal",
-        "Licence: MIT",
-        "Version: 0.3.1",
-        f" {10 * '-'} \n\n\n",
-        "Configuration:"
-    ])
+    from modules.common import info
 
     # Function to log information to both file and console
     def printlog(f, prt):
