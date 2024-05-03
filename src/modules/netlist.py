@@ -14,7 +14,7 @@ class Netlist:
     def add_transient(self, config):
         """Add transient analysis configuration to the netlist."""
         step = config['simulation']['timestep']
-        time = config['simulation']['time'] + step
+        time = config['simulation']['time'] + (20 * step)  
         self.circuit.append(f"\n.tran 0 {time} 0 {step} \n")
         self.circuit.append(".backanno\n")
 

@@ -1,5 +1,6 @@
 import os
 import sys
+import h5py
 import datetime
 import importlib
 import subprocess
@@ -11,11 +12,9 @@ import pandas as pd
 
 from art import text2art
 from scipy.interpolate import interp1d
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
-### Functions
-
-import os
 
 def ensure_directory_is_src():
     """
@@ -41,65 +40,66 @@ def ensure_directory_is_src():
     else:
         print("Current working directory is already 'src'.")
 
-def print_information(config: dict):
-    print(
-        text2art("PyNeuroMemSim"),
-        "Fully Connected Memristor based Neural Network Simulator\n",
-        f"\n {10 * '-'} \n \n",
-        "Author: Ricardo E. Silva\n",
-        "Research Group: INESC MN\n",
-        "Licence: MIT\n",
-        "Version: 0.2\n",
-        f"\n {10 * '-'} \n",
-        1 * "\n\n\n",
-        "Configuration: \n"
-    )
-
-    key_exclusions = ['weights', 'subcircuits', 'parameters']
-
-    def print_dict_with_titles(d):
-        for key, value in d.items():
-            if key in key_exclusions:
-                continue
-            elif isinstance(value, dict):
-                print(f"\n---- {key} ----")
-                print_dict_with_titles(value)  # Recursive call to handle nested dictionaries
-            else:
-                print(f"{key}: {value}")
-    
-    print_dict_with_titles(config)
-
-    print(
-        f"\n {10 * '-'} \n",
-        2 * "\n",
-    )
-
-def clear_directory(directory: str):
+def printlog_info(config: dict):
     """
-    Remove all files within a specified directory.
+    Writes a detailed log of the simulation configuration to a file and prints it.
 
-    This function clears all files from the given directory. If the specified directory does not exist or is not a directory, the function will do nothing.
+    This function generates a report containing the simulator's metadata and the detailed
+    configuration settings, excluding specified keys. The log is saved to a file named
+    'config.log' in the specified directory and also printed to the console.
 
-    Parameters:
-    directory (str): The path to the directory which needs to be cleared.
+    Args:
+    config (dict): Configuration dictionary containing all the settings of the simulation,
+                   nested within 'simulation'.
 
     Returns:
     None
     """
 
-    if not os.path.isdir(directory):
-        print(f"{directory} is not a valid directory.")
-        return
+    # Define the directory to save the log file
+    savedir = config["simulation"]["savedir"]
+    # Keys to exclude from logging
+    key_exclusions = ['weights', 'subcircuits']
 
-    for file in os.listdir(directory):
-        file_path = os.path.join(directory, file)
-        try:
-            if os.path.isfile(file_path) or os.path.islink(file_path):
-                os.remove(file_path)
+    # Construct the header information for the log
+    info = "\n".join([
+        text2art("PyNeuroMemSim"),  # ASCII art title
+        "Fully Connected Memristor based Neural Network Simulator\n",
+        f" {10 * '-'} \n",
+        "Author: Ricardo E. Silva",
+        "Research Group: INESC MN, Lisbon, Portugal",
+        "Licence: MIT",
+        "Version: 0.3",
+        f" {10 * '-'} \n\n\n",
+        "Configuration:"
+    ])
+
+    # Function to log information to both file and console
+    def printlog(f, prt):
+        f.write(f"{prt}\n")
+        print(prt)
+
+    # Function to recursively print dictionary content, excluding certain keys
+    def print_dict_with_titles(f, d):
+        for key, value in d.items():
+            if key in key_exclusions:
+                continue
+            elif isinstance(value, dict):
+                printlog(f, f"\n---- {key} ----")
+                print_dict_with_titles(f, value)  # Recursive call for nested dictionaries
             else:
-                print(f"Skipped {file_path} as it is not a file or link.")
-        except Exception as e:
-            print(f"Failed to delete {file_path}. Reason: {e}")
+                printlog(f, f"{key}: {value}")
+
+    # Open the log file in write mode and start logging
+    with open(os.path.join(savedir, "config.log"), "w") as f:
+        printlog(f, info)
+        print_dict_with_titles(f, config)
+
+    # Print a closing line to the console
+    print(
+        f"\n {10 * '-'} \n",
+        2 * "\n",
+    )
 
 def create_directory(directory: str):
     """
@@ -157,7 +157,7 @@ def create_save_directory(directory: str):
 
     return subdirectory_path
 
-def import_data(config):
+def import_data(config: dict):
     """
     Import training and testing data for a simulation.
 
@@ -281,7 +281,7 @@ def calculate_time(len_xtrain, len_xtest, config):
     
     return (len_xtrain + len_xtest) * timestep
 
-def initialize_weights(config):
+def initialize_weights(config: dict):
     """
     Initialize random weights for each node in a given geometry.
 
@@ -300,7 +300,7 @@ def initialize_weights(config):
 
     return weights
 
-def run_ltspice(config, mode="-b"):
+def run_ltspice(config: dict, mode="-b"):
     """
     Run an LTspice simulation using the specified circuit file.
 
@@ -405,25 +405,187 @@ def calculate_mse(actual, predicted):
     mse_value = error / len(actual)
     return np.mean(mse_value).round(3)
 
+def split_data(data, val_len):
+    """
+    Splits each sequence in the input data into two parts: validation and training.
+
+    The function iterates over a list of sequences (`data`), and for each sequence,
+    it extracts two parts: the first `val_len` elements for the validation set, and the
+    remaining elements for the training set.
+
+    Args:
+    data (list of lists/tuples): A list where each element is a sequence from which
+                                 the first `val_len` elements are taken as validation data.
+    val_len (int): The number of elements from the start of each sequence to include in
+                   the validation data.
+
+    Returns:
+    tuple of two lists: (validation_data, training_data)
+        - validation_data: A list containing the `val_len` initial elements of each sequence.
+        - training_data: A list containing the remaining elements of each sequence after the
+                         initial `val_len` elements.
+    """
+
+    # Use list comprehension for concise and efficient data splitting
+    validation_data = [sequence[:val_len] for sequence in data]
+    training_data = [sequence[val_len:] for sequence in data]
+
+    return validation_data, training_data
+
+def create_mse_hist(config: dict):
+    """
+    Initializes a CSV file to store the MSE values across different epochs.
+
+    This function takes a configuration dictionary that specifies the directory where
+    the MSE history CSV file should be saved. It then creates or overwrites an existing
+    file named 'mse_hist.csv' in the specified directory with a header for logging
+    MSE values for validation and training during different epochs.
+
+    Args:
+    config (dict): Configuration dictionary with nested dictionary 'simulation' containing:
+                   - 'savedir': A string that specifies the directory path where the CSV
+                                file will be saved.
+
+    Returns:
+    None
+    """
+
+    # Extract the directory path from the configuration dictionary
+    savedir = config["simulation"]["savedir"]
+
+    # Construct the full file path for the MSE history CSV file
+    csv_path = os.path.join(savedir, "mse_hist.csv")
+
+    with open(csv_path, "w") as f:
+        # Write the header of the CSV file
+        f.write("epoch,mse_val,mse_trn\n")
+
+def append_mse_hist(config: dict, epoch: int, mse_val: float, mse_trn: float):
+    """
+    Appends the MSE values for a specific epoch to an existing CSV file.
+
+    This function uses a configuration dictionary to determine the save directory for the CSV file.
+    It appends a new line with the current epoch and corresponding MSE values for validation and 
+    training to 'mse_hist.csv'.
+
+    Args:
+    config (dict): Configuration dictionary with a nested dictionary 'simulation' that includes:
+                   - 'savedir': A string specifying the directory path where the CSV file is located.
+    epoch (int): The current epoch number.
+    mse_val (float): The MSE value for the validation dataset in the current epoch.
+    mse_trn (float): The MSE value for the training dataset in the current epoch.
+
+    Returns:
+    None
+    """
+
+    # Extract the directory path from the configuration dictionary
+    savedir = config["simulation"]["savedir"]
+
+    # Construct the full file path for the MSE history CSV file
+    csv_path = os.path.join(savedir, "mse_hist.csv")
+
+    with open(csv_path, "a") as f:
+        # Write the new epoch data to the CSV file
+        f.write(f"{epoch},{mse_val},{mse_trn}\n")
+
+def plot_mse_hist(config: dict):
+    """
+    Reads the MSE data from a CSV file and plots the MSE for validation and training across epochs.
+
+    This function generates a line plot of the MSE values for validation and training from a CSV
+    file named 'mse_hist.csv', located in a directory specified by the configuration dictionary.
+    The plot is saved as an image file 'mse_hist.png' in the same directory.
+
+    Args:
+    config (dict): Configuration dictionary containing a nested dictionary 'simulation' which includes:
+                   - 'savedir': A string specifying the directory path where the CSV file is located and
+                                where the plot image will be saved.
+
+    Returns:
+    None
+
+    Raises:
+    FileNotFoundError: If the 'mse_hist.csv' file does not exist in the specified directory.
+    Exception: For issues related to reading the CSV or plotting.
+    """
+    # Extract the directory path from the configuration dictionary
+    savedir = config["simulation"]["savedir"]
+
+    # Construct the full file path for the MSE history CSV file
+    csv_path = os.path.join(savedir, "mse_hist.csv")
+
+    try:
+        # Load MSE data from the CSV file
+        data = pd.read_csv(csv_path)
+
+        # Create a line plot for MSE values
+        plt.figure(figsize=(10, 6))  # Optional: Adjust figure size for better visibility
+        plt.plot(data["epoch"], data["mse_val"], label="Validation")
+        plt.plot(data["epoch"], data["mse_trn"], label="Training")
+        plt.xlabel("Epoch")
+        plt.ylabel("MSE")
+        plt.title("MSE per Epoch for Validation and Training")  # Optional: Add a title to the plot
+        plt.legend()
+        plt.grid(True)  # Optional: Add a grid for easier reading
+
+        # Save the plot as an image file
+        plt.savefig(os.path.join(savedir, "mse_hist.png"))
+
+        # Close the plot to free up memory
+        plt.close()
+
+    except FileNotFoundError:
+        raise FileNotFoundError(f"The file {csv_path} does not exist.")
+    except Exception as e:
+        raise Exception(f"An error occurred while plotting MSE: {e}")
+
+
 #-------- Needs documentation and improvement
 
-def split_data(data, val_len):
-    val_data, trn_data = [], []
+def create_weight_hist(config: dict, weights: list):
+    path = os.path.join(config["simulation"]["savedir"], "weight_hist")
+    os.makedirs(path)
 
-    for layer in data:
-        val_data.append(layer[:val_len])
-        trn_data.append(layer[val_len:])
-    
-    return val_data, trn_data
+    with h5py.File(os.path.join(path, "weights.hdf5"), "a") as f:
+        for layer_idx, weight_array in enumerate(weights):
 
-def backpropagate(trn_data, trn_out, weights, learning_rate):
+            # Create dataset 
+            f.create_dataset(
+                f'layer_{layer_idx}', 
+                data = weight_array, 
+                compression = "gzip",
+                dtype = 'float32'
+            )
 
-    def sigmoid_derivative(x): return x * (1 - x)
+            dataset = f[f'layer_{layer_idx}']
+            dataset[0] = weight_array
+
+
+def append_weight_hist(config: dict, weights: list):
+
+    with h5py.File(os.path.join(config["simulation"]["savedir"], "weight_hist", "weights.hdf5"), "a") as f:
+        for layer_idx, weight_array in enumerate(weights):
+            dataset = f[f'layer_{layer_idx}']
+            
+
+            current_size = dataset.shape[0]
+            new_size = current_size + 1
+            dataset.resize(new_size, axis=0)
+
+            dataset[current_size] = weight_array
+
+
+            
+
+def backpropagate(config, trn_data, trn_out, weights, learning_rate):
+
+    def sigmoid_derivative(x): return x * (1 - x) * config["opamp"]["power"]
 
     layer_errors = [trn_out - trn_data[-1]]
     layer_deltas = [layer_errors[0] * sigmoid_derivative(trn_data[-1])]
 
-    for i in range(len(weights) - 1, 0, -1):
+    for i in range(len(weights) - 1, -1, -1):
         error = layer_deltas[-1].dot(weights[i].T)
         delta = error * sigmoid_derivative(trn_data[i])
         layer_errors.append(error)
@@ -433,42 +595,48 @@ def backpropagate(trn_data, trn_out, weights, learning_rate):
     layer_errors.reverse()
     layer_deltas.reverse()
 
+    layer_deltas.pop(0)
+    layer_errors.pop(0)
+
     # Update weights
     for i in range(len(weights)): 
-        # For some reason it needs to be negative, otherwise the error increases    
-        weights[i] += trn_data[i].T.dot(layer_deltas[i]) * learning_rate
+
+        dif =  trn_data[i].T.dot(layer_deltas[i])
+        
+        if np.mean(layer_deltas[i]) <= 0: sign = 1
+        else: sign = -1
+
+        weights[i] += learning_rate * sign * dif
 
     return weights
 
-def create_csv(config: dict):
-
-    savedir = config["simulation"]["savedir"]
-    csv_path = os.path.join(savedir, "mse_hist.csv")
-
-
-    with open(csv_path, "w") as f:
-        f.write("epoch,mse_val,mse_trn\n")
-        f.close()
     
-def save_mse_hist(config: dict, epoch, mse_val, mse_trn):
-    savedir = config["simulation"]["savedir"]
-    csv_path = os.path.join(savedir, "mse_hist.csv")
+#-------- Needs implementation
+
+def plot_weight_evolution(config: dict, weights: list):
+
+    path = os.path.join(config["simulation"]["savedir"], "weight_evolution")
+    os.makedirs(path)
+
+    for layer_idx, layer in enumerate(weights):
+        fig, ax = plt.subplots()
+        cax = ax.matshow(layer, interpolation='nearest', cmap='bwr', vmin=0, vmax=1)
+        fig.colorbar(cax)
+
+        def update(epoch):
+            cax.set_data(layer[epoch])
+            ax.set_title(f'Epoch {epoch}')
+            ax.set_aspect('equal', 'box')
+            return cax,
+
+        ani = FuncAnimation(fig, update, frames=config['simulation']['epochs'], repeat=True)
+        ani.save(os.path.join(path, f"l{layer_idx}_weights.mp4"), writer='ffmpeg')
+
+        plt.close(fig)
+
+
+
+
+
+
     
-    with open(csv_path, "a") as f:
-        f.write(f"{epoch},{mse_val},{mse_trn}\n")
-        f.close()
-
-
-def plot_mse(config: dict):
-
-    savedir = config["simulation"]["savedir"]
-    csv_path = os.path.join(savedir, "mse_hist.csv")
-
-    data = pd.read_csv(csv_path)
-
-    plt.plot(data["epoch"], data["mse_val"], label="Validation")
-    plt.plot(data["epoch"], data["mse_trn"], label="Training")
-    plt.xlabel("Epoch")
-    plt.ylabel("MSE")
-    plt.legend()
-    plt.show()

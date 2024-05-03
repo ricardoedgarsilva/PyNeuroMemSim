@@ -15,8 +15,8 @@ def import_data(test_size:float):
     # Convert y to one-hot encoding
     y = pd.get_dummies(y).astype(int)
 
-    # Normalize x
-    x = x / x.max()
+    # Normalize x to [0, 1] considering negative values
+    x = (x - x.min()) / (x.max() - x.min())
   
     # merge x and y into data array in order to split into train and test sets
     data = np.concatenate((x, y), axis=1)
@@ -37,6 +37,7 @@ if __name__ == "__main__":
     print("Test data shape:", np.shape(x_test))
     print("Test labels shape:", np.shape(y_test))
 
+    # Check for negative values
 
 
 
