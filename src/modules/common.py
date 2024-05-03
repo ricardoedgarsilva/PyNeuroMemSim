@@ -543,41 +543,7 @@ def plot_mse_hist(config: dict):
 
 #-------- Needs documentation and improvement
 
-def create_weight_hist(config: dict, weights: list):
-    path = os.path.join(config["simulation"]["savedir"], "weight_hist")
-    os.makedirs(path)
-
-    with h5py.File(os.path.join(path, "weights.hdf5"), "a") as f:
-        for layer_idx, weight_array in enumerate(weights):
-
-            # Create dataset 
-            f.create_dataset(
-                f'layer_{layer_idx}', 
-                data = weight_array, 
-                compression = "gzip",
-                dtype = 'float32'
-            )
-
-            dataset = f[f'layer_{layer_idx}']
-            dataset[0] = weight_array
-
-
-def append_weight_hist(config: dict, weights: list):
-
-    with h5py.File(os.path.join(config["simulation"]["savedir"], "weight_hist", "weights.hdf5"), "a") as f:
-        for layer_idx, weight_array in enumerate(weights):
-            dataset = f[f'layer_{layer_idx}']
-            
-
-            current_size = dataset.shape[0]
-            new_size = current_size + 1
-            dataset.resize(new_size, axis=0)
-
-            dataset[current_size] = weight_array
-
-
-        
-def backpropagate(config, trn_data, trn_out, weights, learning_rate):
+def backpropagate_matrix(config, trn_data, trn_out, weights, learning_rate):
 
     def sigmoid_derivative(x): return x * (1 - x) * config["opamp"]["power"]
 
@@ -609,7 +575,37 @@ def backpropagate(config, trn_data, trn_out, weights, learning_rate):
 
     return weights
 
-    
+def backpropagate(config: dict, output_data, target_data):
+
+    weights = config["simulation"]["weights"]
+    learning_rate = config["simulation"]["learning_rate"]
+
+    def sigmoid_derivative(x): return x * (1 - x) * config["opamp"]["power"]
+
+    # Initialize the list to store the gradient of weights for each layer
+    gradients = [np.zeros_like(w) for w in weights]
+
+    # Start with the output layer
+    error = output_data[-1] - target_data
+    delta = error * sigmoid_derivative(output_data[-1])	
+
+    # Loop in reverse order to backpropagate the error
+    for layer in reversed(range(len(weights))):
+        
+        # Calculate the gradient for the current layer
+        gradients[layer] = output_data[layer].T.dot(delta)
+
+        # Propagate the error backwards
+        if layer > 0:
+            delta = delta.dot(weights[layer].T) * sigmoid_derivative(output_data[layer])
+        
+    # Update the weights using the calculated gradients
+    new_weights = [w - learning_rate * grad for w, grad in zip(weights, gradients)]
+
+    return new_weights
+
+
+
 #-------- Needs implementation
 
 def plot_weight_evolution(config: dict, weights: list):
@@ -633,9 +629,35 @@ def plot_weight_evolution(config: dict, weights: list):
 
         plt.close(fig)
 
+def create_weight_hist(config: dict, weights: list):
+    path = os.path.join(config["simulation"]["savedir"], "weight_hist")
+    os.makedirs(path)
+
+    with h5py.File(os.path.join(path, "weights.hdf5"), "a") as f:
+        for layer_idx, weight_array in enumerate(weights):
+
+            # Create dataset 
+            f.create_dataset(
+                f'layer_{layer_idx}', 
+                data = weight_array, 
+                compression = "gzip",
+                dtype = 'float32'
+            )
+
+            dataset = f[f'layer_{layer_idx}']
+            dataset[0] = weight_array
+
+def append_weight_hist(config: dict, weights: list):
+
+    with h5py.File(os.path.join(config["simulation"]["savedir"], "weight_hist", "weights.hdf5"), "a") as f:
+        for layer_idx, weight_array in enumerate(weights):
+            dataset = f[f'layer_{layer_idx}']
+            
+
+            current_size = dataset.shape[0]
+            new_size = current_size + 1
+            dataset.resize(new_size, axis=0)
+
+            dataset[current_size] = weight_array
 
 
-
-
-
-    

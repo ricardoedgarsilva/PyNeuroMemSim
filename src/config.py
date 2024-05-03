@@ -2,7 +2,7 @@ config = {
     "simulation":{
         "save"  : rf"C:\Users\ricar\Desktop\results",
         "dataset"   : "satdap",
-        "geometry": [[36,18],[18,6],[6,3]],
+        "geometry": [[36,3]],
         "test_size" : 0.1,
         "timestep"  : 1e-8,
         "freq"      : 1e8,
@@ -12,7 +12,7 @@ config = {
     },
     "opamp":{
         "power" : 1,
-        "noninverting" : 0 # Crashing LTSpice solver if > 0.2
+        "noninverting" : 0.5 # Crashing LTSpice solver if > 0.2
     },
     "resistor":{
         "A" : 50,

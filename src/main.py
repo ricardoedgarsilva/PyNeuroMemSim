@@ -55,9 +55,7 @@ if __name__ == "__main__":
         updated_weights = backpropagate(
             config,
             trn_data,
-            y_train,
-            config["simulation"]["weights"],
-            config["simulation"]["learning_rate"]
+            y_train
         )
 
         config["simulation"]["weights"] = updated_weights
