@@ -7,7 +7,7 @@ info = "\n".join([
     "Author: Ricardo E. Silva",
     "Research Group: INESC MN, Lisbon, Portugal",
     "Licence: MIT",
-    "Version: 0.3.2",
+    "Version: 0.3.3",
     f" {10 * '-'} \n\n\n",
     "Configuration:"
 ])
@@ -20,4 +20,7 @@ Changelog:
 • 0.2.0: Added new experimental features
 • 0.3.0: Added new logging capabilities
 • 0.3.2: Added new non matricial backpropagation algorithm
+• 0.3.3: 
+    - Fix bug in info.py importation
+    - Major restructuring of common.py
 """

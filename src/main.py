@@ -1,9 +1,9 @@
-import time
-import numpy as np
-
-from tqdm import tqdm
-from modules.netlist import Netlist
-from modules.common import *
+from modules.data_handling import *
+from modules.dependencies import *
+from modules.file_utils import *
+from modules.netlist import *
+from modules.plotting import *
+from modules.simulation_utils import *
 from config import *
 
 if __name__ == "__main__":
@@ -64,7 +64,7 @@ if __name__ == "__main__":
         ltime.append(np.round(time.time() - start_time, 2))
         etime = np.round(np.mean(ltime) * (config["simulation"]["epochs"] - epoch), 2)	
         append_mse_hist(config, epoch, mse_trn, mse_val)
-        print(f"Epoch {epoch}, MSE val: {mse_val}, MSE trn: {mse_trn}, Time: {ltime[-1]} s, ETA: {etime} s")
+        print(f"Epoch {epoch}, MSE val: {mse_val}, MSE trn: {mse_trn}, Time: {ltime[-1]} s, Time Remaining: {etime} s")
 
         
     print("Simulation finished!")
