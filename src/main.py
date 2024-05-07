@@ -40,7 +40,7 @@ if __name__ == "__main__":
     for epoch in range(config["simulation"]["epochs"]):
         start_time = time.time()
 
-        print(f"\n\r Epoch {epoch} cycle started ....", end=' ')
+        print(f"\r Epoch {epoch} cycle started ....", end=' ')
 
         netlist.mk_circuit(config)
         netlist.save_net(config)

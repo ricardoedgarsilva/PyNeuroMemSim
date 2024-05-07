@@ -14,7 +14,7 @@ def run_ltspice(config: dict, mode="-b"):
     None
     """
 
-    print("\rRunning LTspice simulation...", end=' ')
+    print("\rRunning LTspice simulation...", end=' ' * 20)
 
     circuit_path = os.path.join(config["simulation"]["savedir"], "circuit.cir")
 
@@ -25,7 +25,7 @@ def run_ltspice(config: dict, mode="-b"):
 
         subprocess.run(["ltspice", mode, circuit_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        print("\rLTspice simulation completed.", end=' ')
+        print("\rLTspice simulation completed.", end=' ' * 20)
 
 
     except Exception as e:
@@ -52,7 +52,7 @@ def import_results(config):
           geometry, containing voltage data for each column at specified intervals.
     """
 
-    print("\rImporting LTspice simulation results...", end=' ')
+    print("\rImporting LTspice simulation results...", end=' ' * 20)
 
     # Extract configuration details
     save_dir = config['simulation']['savedir']
@@ -89,7 +89,7 @@ def import_results(config):
         f = interp1d(time_data, voltage_data)
         results[-1][:,col] = f(time_list)
 
-    print("\rLTspice simulation results imported.", end=' ')
+    print("\rLTspice simulation results imported.", end=' ' * 20)
 
     return results
 

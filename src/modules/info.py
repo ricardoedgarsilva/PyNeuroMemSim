@@ -7,7 +7,7 @@ info = "\n".join([
     "Author: Ricardo E. Silva",
     "Research Group: INESC MN, Lisbon, Portugal",
     "Licence: MIT",
-    "Version: 0.3.4",
+    "Version: 0.3.5",
     "Channel: Experimental",
     f" {10 * '-'} \n\n\n",
     "Configuration:"
@@ -17,15 +17,19 @@ info = "\n".join([
 """
 Changelog:
 
-• 0.1.0: Initial version
-• 0.2.0: Added new experimental features
-• 0.3.0: Added new logging capabilities
-• 0.3.2: Added new non matricial backpropagation algorithm
-• 0.3.3: 
+• v0.1.0: Initial version
+• v0.2.0: Added new experimental features
+• v0.3.0: Added new logging capabilities
+• v0.3.2: Added new non matricial backpropagation algorithm
+• v0.3.3: 
     - Fix bug in info.py importation
     - Major restructuring of common.py
-• 0.3.4:
+• v0.3.4:
     - Adding prints with '\r' to show feedback
     - Experimenting with different backpropagation
+• v0.3.5:
+    - Improving prints
+    - Experimenting with different backpropagation functions
+    - Added a new dataset
     
 """

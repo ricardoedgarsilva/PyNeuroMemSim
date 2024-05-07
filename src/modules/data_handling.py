@@ -17,7 +17,7 @@ def import_data(config: dict):
     """
     
     try:
-        print("\rImporting data...", end=' ')
+        print("\rImporting data...", end=' ' * 20)
 
         data_path = os.path.join("..", "data", config["simulation"]["dataset"])
         sys.path.append(data_path)
@@ -66,7 +66,7 @@ def import_data(config: dict):
             pass
 
 
-        print("\rData imported successfully!", end=' ')
+        print("\rData imported successfully!", end=' ' * 20)
 
         return x_train, y_train, x_test, y_test
     except ImportError as ie:
@@ -97,7 +97,7 @@ def create_inputs(x_train, x_test, config):
     savedir = config["simulation"]["savedir"]
 
     try:
-        print("\rCreating input files...", end=' ')
+        print("\rCreating input files...", end=' ' * 20)
 
         inputdir = os.path.join(savedir, "inputs")
         os.makedirs(inputdir, exist_ok=True)
@@ -111,7 +111,7 @@ def create_inputs(x_train, x_test, config):
             inputs_train[f'IN{row}'] = [x[i][row] for i in range(len(x))]
             inputs_train.to_csv(os.path.join(inputdir, f"in{row}.csv"), index=False, header=False)
         
-        print("\rInput files created successfully!", end=' ')
+        print("\rInput files created successfully!", end=' ' * 20)
 
     except Exception as e:
         print(f"An error occurred while creating input files: {e}")
@@ -128,7 +128,7 @@ def calculate_mse(actual, predicted):
     - float: The mean squared error.
     """
 
-    print("\rCalculating Mean Squared Error...", end=' ')
+    print("\rCalculating Mean Squared Error...", end=' ' * 20)
 
     if len(actual) != len(predicted):
         raise ValueError(f"Both arrays must have the same length! {len(actual)} and {len(predicted)}")
@@ -138,7 +138,7 @@ def calculate_mse(actual, predicted):
         error += (a - p) ** 2
     mse_value = error / len(actual)
 
-    print("\rMean Squared Error calculated successfully!", end=' ')
+    print("\rMean Squared Error calculated successfully!", end=' ' * 20)
 
     return np.mean(mse_value).round(3)
 
@@ -180,13 +180,13 @@ def split_data(data, val_len):
                          initial `val_len` elements.
     """
 
-    print("\rSplitting imported data into validation/training ...", end=' ')
+    print("\rSplitting imported data into validation/training ...", end=' ' * 20)
 
     # Use list comprehension for concise and efficient data splitting
     validation_data = [sequence[:val_len] for sequence in data]
     training_data = [sequence[val_len:] for sequence in data]
 
-    print("\rData split successfully!", end=' ')
+    print("\rData split successfully!", end=' ' * 20)
 
     return validation_data, training_data
 
@@ -208,7 +208,7 @@ def create_mse_hist(config: dict):
     None
     """
 
-    print("\rCreating MSE history CSV file...", end=' ')
+    print("\rCreating MSE history CSV file...", end=' ' * 20)
 
     # Extract the directory path from the configuration dictionary
     savedir = config["simulation"]["savedir"]
@@ -220,7 +220,7 @@ def create_mse_hist(config: dict):
         # Write the header of the CSV file
         f.write("epoch,mse_val,mse_trn\n")
     
-    print("\rMSE history CSV file created successfully!", end=' ')
+    print("\rMSE history CSV file created successfully!", end=' ' * 20)
 
 def append_mse_hist(config: dict, epoch: int, mse_val: float, mse_trn: float):
     """
@@ -311,7 +311,7 @@ def backpropagate(config: dict, output_data, target_data):
             delta = delta.dot(weights[layer].T) * sigmoid_derivative(output_data[layer])
         
     # Update the weights using the calculated gradients
-    new_weights = [w - learning_rate * grad for w, grad in zip(weights, gradients)]
+    new_weights = [w + learning_rate * grad for w, grad in zip(weights, gradients)]
 
     return new_weights
 
@@ -343,6 +343,46 @@ def backpropagate2(config: dict, output_data, target_data):
     new_weights = [w - learning_rate * grad for w, grad in zip(weights, gradients)]
 
     return new_weights
+
+def backpropagate3(config, output_data, target_data):
+    weights = config["simulation"]["weights"]
+    learning_rate = config["simulation"]["learning_rate"]
+    
+    # Calculate initial output layer delta
+    # Assuming sigmoid activation function
+    output_delta = (output_data[-1] - target_data) * output_data[-1] * (1 - output_data[-1])
+    deltas = [output_delta]
+    
+    # Backpropagate the errors
+    for i in reversed(range(len(weights) - 1)):
+        current_output = output_data[i + 1]
+        derivative = current_output * (1 - current_output)
+        error = deltas[0]
+        propagated_error = np.dot(error, weights[i + 1].T) * derivative
+        deltas.insert(0, propagated_error)
+    
+    # Update weights layer by layer
+    new_weights = []
+    for i in range(len(weights)):
+        weight = weights[i]
+        updated_weight = np.copy(weight)
+        layer_input = output_data[i]
+        delta = deltas[i]
+        
+        # Update each weight individually
+        for r in range(weight.shape[0]):
+            for c in range(weight.shape[1]):
+                # Calculate gradient as mean of product of inputs and delta errors
+                gradient = np.mean(layer_input[:, r] * delta[:, c])
+                # Ensure gradient is a scalar
+                if np.ndim(gradient) > 0:
+                    gradient = gradient.item()  # Convert numpy array to Python scalar
+                updated_weight[r, c] -= learning_rate * gradient
+        
+        new_weights.append(updated_weight)
+    
+    return new_weights
+
 
 
 #-------- Needs implementation

@@ -1,14 +1,14 @@
 config = {
     "simulation":{
-        "save"  : rf"C:\Users\ricar\Desktop\results",
-        "dataset"   : "satdap",
-        "geometry": [[36,16],[16,6],[6,3]],
+        "save"  : rf"C:\Users\ricar\Downloads\results",
+        "dataset"   : "bike_sharing",
+        "geometry": [[12,6],[6,1]],
         "test_size" : 0.1,
-        "timestep"  : 1e-8,
-        "freq"      : 1e8,
+        "timestep"  : 1e-9,
+        "freq"      : 1e9,
         "precision" : 10,
         "epochs"    : 50,
-        "learning_rate" : 6e-4
+        "learning_rate" : 1e-3
     },
     "opamp":{
         "power" : 1,
