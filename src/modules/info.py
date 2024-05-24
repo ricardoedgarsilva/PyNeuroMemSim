@@ -7,7 +7,7 @@ info = "\n".join([
     "Author: Ricardo E. Silva",
     "Research Group: INESC MN, Lisbon, Portugal",
     "Licence: MIT",
-    "Version: 0.3.5",
+    "Version: 0.3.6",
     "Channel: Experimental",
     f" {10 * '-'} \n\n\n",
     "Configuration:"
@@ -31,5 +31,9 @@ Changelog:
     - Improving prints
     - Experimenting with different backpropagation functions
     - Added a new dataset
+• v0.3.6:
+    - Addew new dataset
+    - Added new rounding conductivity value
+    - More experimental features
     
 """

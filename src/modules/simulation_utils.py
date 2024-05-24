@@ -108,6 +108,7 @@ def initialize_weights(config: dict):
     """
     geometry = config["simulation"]["geometry"]
 
-    weights = [np.random.rand(rows, cols) for rows, cols in geometry]
+    # np.random.rand() returns a random number between 0 and 1
+    weights = [np.zeros((rows, cols)) for rows, cols in geometry]
 
     return weights

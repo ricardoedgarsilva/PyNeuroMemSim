@@ -40,19 +40,26 @@ if __name__ == "__main__":
     for epoch in range(config["simulation"]["epochs"]):
         start_time = time.time()
 
-        print(f"\r Epoch {epoch} cycle started ....", end=' ')
+        # Print epoch cycle started
+        print(f"\rEpoch {epoch} cycle started ....", end=' ')
 
+        # Create netlist and save it
         netlist.mk_circuit(config)
         netlist.save_net(config)
 
+        # Run LTSpice simulation
         run_ltspice(config, mode="-b")
 
+        # Import results and split data
         data = import_results(config)
 
+        # Split data into validation and training data
         val_data, trn_data = split_data(data, len(x_test))
 
+        # Calculate MSE
         mse_trn = calculate_mse(y_train, trn_data[-1])
         mse_val = calculate_mse(y_test, val_data[-1])
+
 
         updated_weights = backpropagate(
             config,
@@ -66,7 +73,7 @@ if __name__ == "__main__":
         ltime.append(np.round(time.time() - start_time, 2))
         etime = np.round(np.mean(ltime) * (config["simulation"]["epochs"] - epoch), 2)	
         append_mse_hist(config, epoch, mse_trn, mse_val)
-        print(f"\rEpoch {epoch}, MSE val: {mse_val}, MSE trn: {mse_trn}, Time: {ltime[-1]} s, Time Remaining: {etime} s")
+        print(f"\rEpoch {epoch:4}, MSE val: {mse_val:0.5f}, MSE trn: {mse_trn:0.5f}, Time: {ltime[-1]:3.2f} s, Time Remaining: {etime:5.2f} s")
 
         
     print("Simulation finished!")

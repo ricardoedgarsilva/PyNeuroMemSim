@@ -1,34 +1,34 @@
 config = {
     "simulation":{
         "save"  : rf"C:\Users\ricar\Downloads\results",
-        "dataset"   : "bike_sharing",
-        "geometry": [[12,6],[6,1]],
-        "test_size" : 0.1,
+        "dataset"   : "satdap",
+        "geometry": [[36,3]],
+        "test_size" : 0.2,
         "timestep"  : 1e-9,
         "freq"      : 1e9,
         "precision" : 10,
         "epochs"    : 50,
-        "learning_rate" : 1e-3
+        "learning_rate" : 1e-2
     },
     "opamp":{
         "power" : 1,
-        "noninverting" : 0.1 # Crashing LTSpice solver if > 0.2
+        "noninverting" : -0.3
     },
     "resistor":{
         "A" : 1e2,
-        "B" : 1e3,
-        "C" : 1e3
+        "B" : 1e4,
+        "C" : 1e4
     },
     "memristor":{
         # 0: Biolek, 1: Yakopcic
         "model":  0,
         "parameters": [
             {
-            "Ron"   : 800,
-            "Roff"  : 2000,
-            "D"     : 0.2212, 
-            "uv"    : 0.0108, 
-            "p"     : 4.64
+            "Ron"   : 10,
+            "Roff"  : 10e5,
+            "D"     : 0.10, 
+            "uv"    : 0.0001, 
+            "p"     : 5
             },
             {
             "a1" : 0.32,
@@ -42,7 +42,6 @@ config = {
             "xn" : 0.52,
             "alphap" : 0.82,
             "alphan" : 1,
-            "xo" : 0.01,
             "eta" : 1
             }
         ],
