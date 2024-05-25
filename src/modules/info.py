@@ -1,13 +1,13 @@
 from art import text2art
 
 info = "\n".join([
-    text2art("PyNeuroMemSim"),  # ASCII art title
+    text2art("PyNeuroMemSim"),  
     "Fully Connected Memristor based Neural Network Simulator\n",
     f" {10 * '-'} \n",
     "Author: Ricardo E. Silva",
     "Research Group: INESC MN, Lisbon, Portugal",
     "Licence: MIT",
-    "Version: 0.3.6",
+    "Version: 0.3.6.5",
     "Channel: Experimental",
     f" {10 * '-'} \n\n\n",
     "Configuration:"
@@ -35,5 +35,9 @@ Changelog:
     - Addew new dataset
     - Added new rounding conductivity value
     - More experimental features
-    
+• v0.3.6.5:
+    - Remade the mnist dataset importation
+
+
+       
 """
