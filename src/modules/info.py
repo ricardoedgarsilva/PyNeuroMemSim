@@ -7,7 +7,7 @@ info = "\n".join([
     "Author: Ricardo E. Silva",
     "Research Group: INESC MN, Lisbon, Portugal",
     "Licence: MIT",
-    "Version: 0.3.6.5",
+    "Version: 0.3.7",
     "Channel: Experimental",
     f" {10 * '-'} \n\n\n",
     "Configuration:"
@@ -37,7 +37,10 @@ Changelog:
     - More experimental features
 • v0.3.6.5:
     - Remade the mnist dataset importation
-
+• v0.3.7:
+    - Merged backpropagation methods into a single one
+    - Method choice for initialize weights introduces
+    - Introduction of RPROP algorithm
 
        
 """

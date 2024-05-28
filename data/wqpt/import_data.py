@@ -32,6 +32,11 @@ def import_data(test_size:float):
     return x_train, y_train, x_test, y_test
 
 if __name__ == "__main__":
-    import_data(0.2, None)
+    x_train, y_train, x_test, y_test = import_data(0.2)
+
+    print("Training data shape:", np.shape(x_train))
+    print("Training labels shape:", np.shape(y_train))
+    print("Test data shape:", np.shape(x_test))
+    print("Test labels shape:", np.shape(y_test))
 
 

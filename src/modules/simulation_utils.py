@@ -93,7 +93,7 @@ def import_results(config):
 
     return results
 
-def initialize_weights(config: dict):
+def initialize_weights(config: dict, method="random"):
     """
     Initialize random weights for each node in a given geometry.
 
@@ -103,12 +103,21 @@ def initialize_weights(config: dict):
     Parameters:
     config (dict): A dictionary containing the simulation configuration, specifically the geometry of the network.
 
+    method (str): The method used to initialize the weights. Options are 'random', 'zeros', or 'ones'.
+
+
+
     Returns:
     list: A nested list containing the weights for each node in each layer of the geometry.
     """
     geometry = config["simulation"]["geometry"]
 
-    # np.random.rand() returns a random number between 0 and 1
-    weights = [np.zeros((rows, cols)) for rows, cols in geometry]
+    match method:
+        case "random":
+            weights = [np.random.rand(rows, cols) for rows, cols in geometry]
+        case "zeros":
+            weights = [np.zeros((rows, cols)) for rows, cols in geometry]
+        case "ones":
+            weights = [np.ones((rows, cols)) for rows, cols in geometry]
 
     return weights

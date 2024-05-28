@@ -1,21 +1,21 @@
 config = {
     "simulation":{
         "save"  : rf"C:\Users\ricar\Downloads\results",
-        "dataset"   : "satdap",
-        "geometry": [[36,3]],
+        "dataset"   : "wqpt",
+        "geometry": [[11,20],[20,10]],
         "test_size" : 0.2,
         "timestep"  : 1e-9,
         "freq"      : 1e9,
         "precision" : 10,
         "epochs"    : 50,
-        "learning_rate" : 1e-2
+        "learning_rate" : 0
     },
     "opamp":{
         "power" : 1,
-        "noninverting" : -0.3
+        "noninverting" : -0.5
     },
     "resistor":{
-        "A" : 1e2,
+        "A" : 1e3,
         "B" : 1e4,
         "C" : 1e4
     },

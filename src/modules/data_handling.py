@@ -80,10 +80,12 @@ def import_data(config: dict):
 
 def create_inputs(x_train, x_test, config):
     """
-    Create and save input files for training and testing.
+    Create and save input files for training and testing using multithreading.
 
     This function combines training and test data, then creates and saves these input values 
     as CSV files in a specified directory. Each file corresponds to a row of the input data.
+    Multithreading is used to parallelize the creation of CSV files, with the number of threads 
+    set to the number of CPU cores minus one, unless there is only one core.
 
     Parameters:
     x_train (np.array): The training data.
@@ -93,25 +95,40 @@ def create_inputs(x_train, x_test, config):
     Returns:
     None
     """
-
     savedir = config["simulation"]["savedir"]
 
     try:
-        print("\rCreating input files...", end=' ' * 20)
+        print("Creating input files...")
 
         inputdir = os.path.join(savedir, "inputs")
         os.makedirs(inputdir, exist_ok=True)
         x = np.concatenate((x_test, x_train), axis=0)
-
         time = [config['simulation']['timestep'] * i for i in range(len(x))]
-
-        for row in range(config["simulation"]["geometry"][0][0]):
-            inputs_train = pd.DataFrame(columns=['time', f'IN{row}'])
-            inputs_train["time"] = time
-            inputs_train[f'IN{row}'] = [x[i][row] for i in range(len(x))]
-            inputs_train.to_csv(os.path.join(inputdir, f"in{row}.csv"), index=False, header=False)
         
-        print("\rInput files created successfully!", end=' ' * 20)
+        def save_row(start_row, end_row):
+            for row in range(start_row, end_row):
+                inputs_train = pd.DataFrame(columns=['time', f'IN{row}'])
+                inputs_train["time"] = time
+                inputs_train[f'IN{row}'] = [x[i][row] for i in range(len(x))]
+                inputs_train.to_csv(os.path.join(inputdir, f"in{row}.csv"), index=False, header=False)
+
+        num_cpus = os.cpu_count() or 1  # Default to 1 if os.cpu_count() returns None
+        num_threads = max(1, num_cpus - 1)  # Use one less than the number of CPU cores, unless there is only one core
+        num_rows = config["simulation"]["geometry"][0][0]
+        rows_per_thread = num_rows // num_threads
+        threads = []
+
+        for i in range(num_threads):
+            start_row = i * rows_per_thread
+            end_row = (i + 1) * rows_per_thread if i != num_threads - 1 else num_rows
+            thread = threading.Thread(target=save_row, args=(start_row, end_row))
+            threads.append(thread)
+            thread.start()
+
+        for thread in threads:
+            thread.join()
+
+        print("Input files created successfully!")
 
     except Exception as e:
         print(f"An error occurred while creating input files: {e}")
@@ -259,189 +276,91 @@ def bound_weights(weights: list):
         weights[i] = np.clip(weights[i], 0.01, 0.99)
     return weights
 
-
-def backpropagate_old(config, trn_data, trn_out, weights, learning_rate):
-
-    def sigmoid_derivative(x): return x * (1 - x) * config["opamp"]["power"]
-
-    layer_errors = [trn_out - trn_data[-1]]
-    layer_deltas = [layer_errors[0] * sigmoid_derivative(trn_data[-1])]
-
-    for i in range(len(weights) - 1, -1, -1):
-        error = layer_deltas[-1].dot(weights[i].T)
-        delta = error * sigmoid_derivative(trn_data[i])
-        layer_errors.append(error)
-        layer_deltas.append(delta)
-
-    # Reverse the error and delta lists
-    layer_errors.reverse()
-    layer_deltas.reverse()
-
-    layer_deltas.pop(0)
-    layer_errors.pop(0)
-
-    # Update weights
-    for i in range(len(weights)): 
-
-        dif =  trn_data[i].T.dot(layer_deltas[i])
-        
-        if np.mean(layer_deltas[i]) <= 0: sign = 1
-        else: sign = -1
-
-        weights[i] += learning_rate * sign * dif
-
-    return weights
-
 def backpropagate(config: dict, output_data, target_data):
 
     weights = config["simulation"]["weights"]
     learning_rate = config["simulation"]["learning_rate"]
 
-    def sigmoid_derivative(x): return x * (1 - x) * config["opamp"]["power"]
-
-    # Initialize the list to store the gradient of weights for each layer
-    gradients = [np.zeros_like(w) for w in weights]
-
-    # Start with the output layer
-    error = output_data[-1] - target_data
-    delta = error * sigmoid_derivative(output_data[-1])	
-
-    # Loop in reverse order to backpropagate the error
-    for layer in reversed(range(len(weights))):
-
-        
-        # Calculate the gradient for the current layer
-        gradients[layer] = output_data[layer].T.dot(delta)
-
-        # Propagate the error backwards
-        if layer > 0:
-            delta = delta.dot(weights[layer].T) * sigmoid_derivative(output_data[layer])
-        
-    # Update the weights using the calculated gradients
-    new_weights = [w + learning_rate * grad for w, grad in zip(weights, gradients)]
-
-    # Bound the weights between 0 and 1
-    # new_weights = bound_weights(new_weights)
-
-    return new_weights
-
-def backpropagate2(config: dict, output_data, target_data):
-    weights = config["simulation"]["weights"]
-    learning_rate = config["simulation"]["learning_rate"]
-
     def sigmoid_derivative(x): 
         return x * (1 - x) * config["opamp"]["power"]
 
-    # Initialize the list to store the gradient of weights for each layer
-    gradients = [np.zeros_like(w) for w in weights]
-
-    # Start with the output layer
-    error = output_data[-1] - target_data
+    # Calculate the error and deltas
+    error = target_data - output_data[-1]
     delta = error * sigmoid_derivative(output_data[-1])
 
-    # Loop in reverse order to backpropagate the error
-    for layer in reversed(range(len(weights))):
-        # Calculate the gradient for the current layer using element-wise multiplication for delta and output
-        gradients[layer] = np.multiply.outer(delta, output_data[layer])
+    new_weights = [np.zeros_like(w) for w in weights]
 
-        # Propagate the error backwards
-        if layer > 0:
-            # Calculate delta for next layer; re-adjust the shape for broadcasting, if necessary
-            delta = np.sum(delta[:, None, :] * weights[layer][None, :, :], axis=2) * sigmoid_derivative(output_data[layer])
-
-    # Update the weights using the calculated gradients element-wise
-    new_weights = [w - learning_rate * grad for w, grad in zip(weights, gradients)]
-
-    return new_weights
-
-def backpropagate3(config, output_data, target_data):
-    weights = config["simulation"]["weights"]
-    learning_rate = config["simulation"]["learning_rate"]
-
-    def sigmoid_derivative(x): return x * (1 - x) * config["opamp"]["power"]
-
-    # Calculate initial output layer delta
-    # Assuming sigmoid activation function
-    error = (output_data[-1] - target_data)
-    deltas = [error * sigmoid_derivative(output_data[-1])]
-    
-    # Backpropagate the errors
-    for i in reversed(range(len(weights) - 1)):
-        current_output = output_data[i + 1]
-        derivative = current_output * (1 - current_output)
-        error = deltas[0]
-        propagated_error = np.dot(error, weights[i + 1].T) * derivative
-        deltas.insert(0, propagated_error)
-    
-    # Update weights layer by layer
-    new_weights = []
-    for i in range(len(weights)):
-        weight = weights[i]
-        updated_weight = np.copy(weight)
-        layer_input = output_data[i]
-        delta = deltas[i]
+    for layer in reversed(range(len(weights))): 
         
-        # Update each weight individually
-        for r in range(weight.shape[0]):
-            for c in range(weight.shape[1]):
-                # Calculate gradient as mean of product of inputs and delta errors
-                gradient = np.mean(layer_input[:, r] * delta[:, c])
-                # Ensure gradient is a scalar
-                gradient = gradient.item() 
-                updated_weight[r, c] += learning_rate * gradient
-        
-        new_weights.append(updated_weight)
+        gradients = output_data[layer].T.dot(delta)
 
-    # Bound the weights between 0 and 1
+        new_weights[layer] = weights[layer] - learning_rate * gradients
+
+        delta = delta.dot(weights[layer].T) * sigmoid_derivative(output_data[layer])
+
+
+
+    # Assuming there's a function to bound weights, call it 
     new_weights = bound_weights(new_weights)
-    
+
     return new_weights
 
-def backpropagate4(config, output_data, target_data):
+def rprop_update(config: dict, output_data, target_data):
     weights = config["simulation"]["weights"]
-    learning_rate = config["simulation"]["learning_rate"]
+    
+    # Constants for RPROP
+    eta_plus = 1.2
+    eta_minus = 0.5
+    delta_max = 50
+    delta_min = 0.000001
+    
+    # Initialize update values if not already present
+    if "delta_values" not in config["simulation"]:
+        config["simulation"]["delta_values"] = [0.1 * np.ones_like(w) for w in weights]
+
+    deltas = config["simulation"]["delta_values"]
+    last_gradients = config["simulation"].get("last_gradients", [np.zeros_like(w) for w in weights])
 
     def sigmoid_derivative(x): 
         return x * (1 - x) * config["opamp"]["power"]
-
-    def sign(x):
-        return np.sign(x)
-
-    # Calculate initial output layer delta
-    # Assuming sigmoid activation function
-    error = (output_data[-1] - target_data)
-    deltas = [error * sigmoid_derivative(output_data[-1])]
     
-    # Backpropagate the errors
-    for i in reversed(range(len(weights) - 1)):
-        current_output = output_data[i + 1]
-        derivative = sigmoid_derivative(current_output)
-        error = deltas[0]
-        propagated_error = np.dot(error, weights[i + 1].T) * sign(derivative)
-        deltas.insert(0, propagated_error)
-    
-    # Update weights layer by layer
-    new_weights = []
-    for i in range(len(weights)):
-        weight = weights[i]
-        updated_weight = np.copy(weight)
-        layer_input = output_data[i]
-        delta = deltas[i]
-        
-        # Update each weight individually
-        for r in range(weight.shape[0]):
-            for c in range(weight.shape[1]):
-                # Calculate gradient as mean of product of inputs and delta errors
-                gradient = np.mean(layer_input[:, r] * delta[:, c])
-                # Ensure gradient is a scalar
-                gradient = gradient.item()
-                updated_weight[r, c] += learning_rate * gradient
-        
-        new_weights.append(updated_weight)
+    # Calculate the error and deltas
+    error = target_data - output_data[-1]
+    delta = error * sigmoid_derivative(output_data[-1])
 
-    # Bound the weights between 0 and 1
+    new_weights = [np.zeros_like(w) for w in weights]
+
+    for layer in reversed(range(len(weights))):
+        gradients = output_data[layer].T.dot(delta)
+
+        # Update the step sizes based on the change in sign of the gradient
+        sign_change = np.sign(gradients) * np.sign(last_gradients[layer])
+        increase_indices = sign_change > 0
+        decrease_indices = sign_change < 0
+        deltas[layer][increase_indices] = np.minimum(deltas[layer][increase_indices] * eta_plus, delta_max)
+        deltas[layer][decrease_indices] = np.maximum(deltas[layer][decrease_indices] * eta_minus, delta_min)
+        
+        # Update weights where gradient sign does not change
+        weight_update_indices = sign_change >= 0
+        new_weights[layer][weight_update_indices] = weights[layer][weight_update_indices] - np.sign(gradients[weight_update_indices]) * deltas[layer][weight_update_indices]
+        
+        # If the gradient sign changes, revert the weight updates
+        new_weights[layer][decrease_indices] = weights[layer][decrease_indices]
+        
+        # Update deltas for next iteration
+        last_gradients[layer] = gradients
+
+        # Propagate delta to previous layer
+        if layer > 0:
+            delta = delta.dot(weights[layer].T) * sigmoid_derivative(output_data[layer])
+
+    # Store updated gradients and deltas back in config
+    config["simulation"]["delta_values"] = deltas
+    config["simulation"]["last_gradients"] = last_gradients
+
+    # Optionally, bound weights if necessary
     new_weights = bound_weights(new_weights)
-    
+
     return new_weights
 
 #-------- Needs implementation
