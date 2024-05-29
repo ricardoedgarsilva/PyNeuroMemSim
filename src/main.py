@@ -1,6 +1,7 @@
 from modules.data_handling import *
 from modules.dependencies import *
 from modules.file_utils import *
+from modules.learning_algorithms import *
 from modules.netlist import *
 from modules.plotting import *
 from modules.simulation_utils import *
@@ -61,18 +62,21 @@ if __name__ == "__main__":
         mse_val = calculate_mse(y_test, val_data[-1])
 
 
-        # updated_weights = backpropagate(
-        #     config,
-        #     trn_data,
-        #     y_train
-        # )
+        # Update weights based on the method
+        func = globals().get(config["learning"]["algorithm"])
+        if func:
+            updated_weights = func(
+                config,
+                trn_data,
+                y_train
+            )
+        else:
+            raise ValueError(f"Algorithm {config['learning']['algorithm']} not found!")
 
-        updated_weights = rprop_update(
-            config,
-            trn_data,
-            y_train
-        )
-        
+        # Bound weights if necessary
+        if config["learning"]["bound_weights"]:
+            updated_weights = bound_weights(updated_weights)
+
 
         config["simulation"]["weights"] = updated_weights
 

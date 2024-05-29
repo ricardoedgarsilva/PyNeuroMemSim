@@ -2,13 +2,36 @@ config = {
     "simulation":{
         "save"  : rf"C:\Users\ricar\Downloads\results",
         "dataset"   : "wqpt",
-        "geometry": [[11,20],[20,10]],
+        "geometry": [[11,9],[9,10]],
         "test_size" : 0.2,
         "timestep"  : 1e-9,
         "freq"      : 1e9,
         "precision" : 10,
         "epochs"    : 50,
-        "learning_rate" : 0
+    },
+    "learning":{
+        # Available algorithms: backpropogation, rprop, momentum, adam
+        "algorithm" : "momentum",
+        "bound_weights" : True,
+        "learning_rate" : 1e-3,
+        "initialize_weights" : "random",
+        ######
+        "rprop" : {
+            "delta_min" : 0.00001,
+            "delta_max" : 50,
+            "eta_minus" : 0.5,
+            "eta_plus" : 1.2
+        },
+        ######
+        "momentum" : {
+            "gamma" : 0.9
+        },
+        ######
+        "adam" : {
+            "beta1" : 0.9,
+            "beta2" : 0.999,
+            "epsilon" : 1e-8
+        }
     },
     "opamp":{
         "power" : 1,

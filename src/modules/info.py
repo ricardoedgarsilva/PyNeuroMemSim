@@ -7,7 +7,7 @@ info = "\n".join([
     "Author: Ricardo E. Silva",
     "Research Group: INESC MN, Lisbon, Portugal",
     "Licence: MIT",
-    "Version: 0.3.7",
+    "Version: 0.3.8",
     "Channel: Experimental",
     f" {10 * '-'} \n\n\n",
     "Configuration:"
@@ -41,6 +41,10 @@ Changelog:
     - Merged backpropagation methods into a single one
     - Method choice for initialize weights introduces
     - Introduction of RPROP algorithm
+• v0.3.8:
+    - Introduction of momentum algorithm
+    - Introduction of Adam algorithm
+    - Refactorization of learning algorithms with config and new file
 
        
 """
