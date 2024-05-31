@@ -285,5 +285,67 @@ def bound_weights(weights):
     # This modifies the list in-place and returns the modified list.
     return [np.clip(weight, 0.01, 0.99) for weight in weights]
 
+def compute_weight_histogram(config: dict):
+    """
+    Compute weight histograms for the given simulation configuration.
+    
+    The function assumes a structure of `config` dictionary where weights and bin size
+    are provided under the `simulation` key. It computes the histograms for the flattened
+    weights of each layer and appends these histograms to the `weight_distribution` list
+    in the config.
 
+    Parameters:
+    config (dict): Configuration dictionary with keys:
+        - simulation: A dictionary containing:
+            - weights (list of arrays): Weight matrices of different layers.
+            - bin_size (float): Size of the bin for histogram computation.
+            - weight_distribution (list): A list to store histograms of weight distributions.
 
+    Prints:
+    Status of the computation with updates.
+    """
+
+    print("\rComputing weight histograms", end=' ' * 20)
+    
+    if "weight_distribution" not in config["simulation"]:
+        config["simulation"]["weight_distribution"] = []
+
+    histograms = []
+    bin_size = config["simulation"]["bin_size"]
+    bins = np.arange(0, 1+bin_size, bin_size)
+    weights = config["simulation"]["weights"]
+
+    for layer in weights:
+
+        hist, _ = np.histogram(layer.flatten(), bins=bins)
+        histograms.append(hist)
+
+    config["simulation"]["weight_distribution"].append(histograms)
+
+    print("\rWeight histograms computed successfully!", end=' ' * 20)
+
+def save_weight_histogram(config: dict):
+    """
+    Save the computed weight histograms to a file.
+
+    Assumes the weight histograms are stored under `simulation -> weight_distribution` in the
+    provided configuration dictionary. Saves the histograms as a pickle file in the specified
+    directory.
+
+    Parameters:
+    config (dict): Configuration dictionary with keys:
+        - simulation: A dictionary containing:
+            - savedir (str): Directory path to save the histogram file.
+            - weight_distribution (list): List of histograms to be saved.
+
+    Prints:
+    Status of the file save operation.
+    """
+
+    print("\rSaving weight histograms", end=' ' * 20)
+
+    filepath = os.path.join(config["simulation"]["savedir"], "weight_distribution.pkl")
+    with open(filepath, "wb") as f:
+        pickle.dump(config["simulation"]["weight_distribution"], f)
+
+    print("\rWeight histograms saved successfully!", end=' ' * 20)

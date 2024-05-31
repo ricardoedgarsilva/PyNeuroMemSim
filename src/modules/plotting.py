@@ -51,23 +51,56 @@ def plot_mse_hist(config: dict):
     except Exception as e:
         raise Exception(f"An error occurred while plotting MSE: {e}")
 
-def plot_weight_evolution(config: dict, weights: list):
+def visualize_histograms(config: dict):
+    """
+    Visualizes histograms for each layer of a neural network across different epochs,
+    with interactive slider control to switch between epochs.
 
-    path = os.path.join(config["simulation"]["savedir"], "weight_evolution")
-    os.makedirs(path)
+    Parameters:
+    - config (dict): Configuration dictionary containing simulation parameters and weight distribution data.
 
-    for layer_idx, layer in enumerate(weights):
-        fig, ax = plt.subplots()
-        cax = ax.matshow(layer, interpolation='nearest', cmap='bwr', vmin=0, vmax=1)
-        fig.colorbar(cax)
+    Returns:
+    - None
+    """
+    # Extract simulation parameters and weight distribution data from config
+    epochs = config["simulation"]["epochs"]
+    layers = len(config["simulation"]["geometry"])
+    bin_size = config["simulation"]["bin_size"]
+    histogram_data = config["simulation"]["weight_distribution"]
 
-        def update(epoch):
-            cax.set_data(layer[epoch])
-            ax.set_title(f'Epoch {epoch}')
-            ax.set_aspect('equal', 'box')
-            return cax,
+    # Compute bin edges for histogram
+    bins = np.arange(0, 1 + bin_size, bin_size)
+    bin_edges = bins[:-1]
 
-        ani = FuncAnimation(fig, update, frames=config['simulation']['epochs'], repeat=True)
-        ani.save(os.path.join(path, f"l{layer_idx}_weights.mp4"), writer='ffmpeg')
+    # Create a figure with subplots, one for each layer
+    fig, axs = plt.subplots(1, layers, squeeze=False)  # Use squeeze=False to ensure axs is always a 2D array
 
-        plt.close(fig)
+    # Plotting histograms for each layer
+    bars = []
+    for ax, layer_data in zip(axs.flat, range(layers)):
+        counts = histogram_data[0][layer_data]  # Initial histogram data for the first epoch
+        bar = ax.bar(bin_edges, counts, width=np.diff(bins), align='edge', edgecolor='black')
+        bars.append(bar)
+        ax.set_title(f'Layer {layer_data + 1}')
+        ax.set_ylabel('Number of Weights' if layer_data == 0 else '')
+        ax.set_xticks(bins)
+        ax.set_xticklabels([f"{b:.2f}" for b in bins], rotation=45)
+
+    # Create a slider for selecting epochs
+    ax_slider = plt.axes([0.1, 0.05, 0.8, 0.03])  # Adjust position to not overlap with subplots
+    slider = Slider(ax_slider, 'Epoch', 0, epochs - 1, valinit=0, valstep=1)
+
+    # Define an update function for the slider
+    def update(val):
+        epoch_index = int(slider.val)
+        for bar, layer_data in zip(bars, range(layers)):
+            new_data = histogram_data[epoch_index][layer_data]
+            for rect, count in zip(bar, new_data):
+                rect.set_height(count)
+            # Dynamically adjust the y-axis to accommodate the new data
+            axs.flat[layer_data].set_ylim(0, max(new_data) * 1.1)
+
+        fig.canvas.draw_idle()
+
+    slider.on_changed(update)  # Connect the slider to the update function
+    plt.show()

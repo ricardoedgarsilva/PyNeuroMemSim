@@ -21,7 +21,13 @@ def printlog_info(config: dict):
     # Define the directory to save the log file
     savedir = config["simulation"]["savedir"]
     # Keys to exclude from logging
-    key_exclusions = ['weights', 'subcircuits']
+    key_exclusions = ['weights', 'weight_distribution', 'subcircuits']
+
+    method = config["learning"]["algorithm"]
+    for key in config["learning"]:
+        inclusions = ["algorithm", "bound_weights", "learning_rate", "initialize_weights"]
+        if key != method and key not in inclusions:
+            key_exclusions.append(key)
 
     # Construct the header information for the log
     from modules.info import info

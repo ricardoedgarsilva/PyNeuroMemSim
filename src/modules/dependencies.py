@@ -12,7 +12,7 @@ import datetime
 
 # Data manipulation
 import ltspice
-import h5py
+import pickle
 import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
@@ -21,3 +21,4 @@ from scipy.interpolate import interp1d
 # Data visualization
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from matplotlib.widgets import Slider

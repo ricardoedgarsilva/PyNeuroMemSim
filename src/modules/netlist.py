@@ -107,12 +107,13 @@ class Netlist:
             self.circuit.append(f"\n*** Layer {layer_i} Memristors ***\n")
             for row in range(layer[0]):
                 for col in range(layer[1]):
+                    xo = 1 - config["simulation"]["weights"][layer_i][row][col]
                     self.add_memristor(
                         f"M_{layer_i}_{row}_{col}", 
                         f"nin_{layer_i}_{row}", 
                         f"nout_{layer_i}_{col}", 
                         f"memristor_{layer_i}_{row}_{col}",
-                        config["simulation"]["weights"][layer_i][row][col]
+                        xo
                     )   
 
         # Add the comparators to each layer

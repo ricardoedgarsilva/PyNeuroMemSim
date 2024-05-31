@@ -1,20 +1,22 @@
 config = {
     "simulation":{
         "save"  : rf"C:\Users\ricar\Downloads\results",
-        "dataset"   : "wqpt",
-        "geometry": [[11,9],[9,10]],
-        "test_size" : 0.2,
+        "dataset"   : "bike_sharing",
+        "geometry": [[12,6],[6,6],[6,1]],
+        "test_size" : 0.1,
         "timestep"  : 1e-9,
         "freq"      : 1e9,
         "precision" : 10,
-        "epochs"    : 50,
+        "epochs"    : 3,
+        "bin_size"  : 0.1,
     },
     "learning":{
         # Available algorithms: backpropogation, rprop, momentum, adam
-        "algorithm" : "momentum",
+        "algorithm" : "rprop",
         "bound_weights" : True,
-        "learning_rate" : 1e-3,
-        "initialize_weights" : "random",
+        "learning_rate" : 1e-5,
+        # Available weight initialization methods: random, zeros, ones
+        "initialize_weights" : "ones",
         ######
         "rprop" : {
             "delta_min" : 0.00001,
@@ -38,7 +40,7 @@ config = {
         "noninverting" : -0.5
     },
     "resistor":{
-        "A" : 1e3,
+        "A" : 500,
         "B" : 1e4,
         "C" : 1e4
     },
@@ -47,11 +49,11 @@ config = {
         "model":  0,
         "parameters": [
             {
-            "Ron"   : 10,
-            "Roff"  : 10e5,
-            "D"     : 0.10, 
-            "uv"    : 0.0001, 
-            "p"     : 5
+            "Ron"   : 100,
+            "Roff"  : 16e3,
+            "D"     : 5, 
+            "uv"    : 1e-5, 
+            "p"     : 2
             },
             {
             "a1" : 0.32,

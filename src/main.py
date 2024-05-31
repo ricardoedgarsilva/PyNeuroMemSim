@@ -27,6 +27,7 @@ if __name__ == "__main__":
     # Calculate simulation time and initialize weights
     config["simulation"]["time"] = calculate_time(len(x_train), len(x_test), config)
     config["simulation"]["weights"] = initialize_weights(config)
+    compute_weight_histogram(config)
 
     # Create MSE history CSV file and weight history HDF5 file
     create_mse_hist(config)
@@ -80,6 +81,10 @@ if __name__ == "__main__":
 
         config["simulation"]["weights"] = updated_weights
 
+        # Compute weight histogram
+        compute_weight_histogram(config)
+        save_weight_histogram(config)
+
 
         ltime.append(np.round(time.time() - start_time, 2))
         etime = np.round(np.mean(ltime) * (config["simulation"]["epochs"] - epoch), 2)	
@@ -89,3 +94,4 @@ if __name__ == "__main__":
         
     print("Simulation finished!")
     plot_mse_hist(config)
+    visualize_histograms(config)

@@ -7,7 +7,7 @@ info = "\n".join([
     "Author: Ricardo E. Silva",
     "Research Group: INESC MN, Lisbon, Portugal",
     "Licence: MIT",
-    "Version: 0.3.8.1",
+    "Version: 0.3.9",
     "Channel: Experimental",
     f" {10 * '-'} \n\n\n",
     "Configuration:"
@@ -47,7 +47,10 @@ Changelog:
     - Refactorization of learning algorithms with config and new file
     • v0.3.8.1:
         - Clear Untitle-1.py
-
-
+• v0.3.9:
+    - Fix weight updating (xo = 1 - w)
+    - Fix backpropagation delta indexing
+    - Add weight statistics
+    - Fix print info with learning methods
        
 """

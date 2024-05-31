@@ -63,9 +63,9 @@ def backpropagation(config: dict, output_data, target_data):
         # Update weights in-place by subtracting the gradient scaled by the learning rate
         new_weights[layer] -= learning_rate * gradients
 
-        if layer != 0:  # Avoid computation for the input layer where it's not needed
+        if layer > 0:  # Avoid computation for the input layer where it's not needed
             # Update delta for the next layer to be processed
-            delta = delta.dot(weights[layer].T) * sig_derivatives[layer - 1]
+            delta = delta.dot(weights[layer].T) * sig_derivatives[layer]
 
     return new_weights
 
