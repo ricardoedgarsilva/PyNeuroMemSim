@@ -17,14 +17,14 @@ def plot_mse_hist(config: dict):
     None
 
     Raises:
-    FileNotFoundError: If the 'mse_hist.csv' file does not exist in the specified directory.
+    FileNotFoundError: If the 'metric.csv' file does not exist in the specified directory.
     Exception: For issues related to reading the CSV or plotting.
     """
     # Extract the directory path from the configuration dictionary
     savedir = config["simulation"]["savedir"]
 
     # Construct the full file path for the MSE history CSV file
-    csv_path = os.path.join(savedir, "mse_hist.csv")
+    csv_path = os.path.join(savedir, "metrics.csv")
 
     try:
         # Load MSE data from the CSV file
@@ -86,7 +86,7 @@ def visualize_histograms(config: dict):
         ax.set_xticks(bins)
         ax.set_xticklabels([f"{b:.2f}" for b in bins], rotation=45)
 
-    # Create a slider for selecting epochs
+    # Create a slider for selectinhg epochs
     ax_slider = plt.axes([0.1, 0.05, 0.8, 0.03])  # Adjust position to not overlap with subplots
     slider = Slider(ax_slider, 'Epoch', 0, epochs - 1, valinit=0, valstep=1)
 

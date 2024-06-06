@@ -1,22 +1,25 @@
 config = {
     "simulation":{
         "save"  : rf"C:\Users\ricar\Downloads\results",
-        "dataset"   : "bike_sharing",
-        "geometry": [[12,6],[6,6],[6,1]],
+        "dataset"   : "satdap",
+        "geometry": [[36,24],[24,12],[12,3]],
         "test_size" : 0.1,
         "timestep"  : 1e-9,
         "freq"      : 1e9,
         "precision" : 10,
-        "epochs"    : 3,
+        "epochs"    : 50,
         "bin_size"  : 0.1,
+        "xy_scale"   : [1, 1]
     },
     "learning":{
         # Available algorithms: backpropogation, rprop, momentum, adam
-        "algorithm" : "rprop",
+        "algorithm" : "backpropagation",
         "bound_weights" : True,
-        "learning_rate" : 1e-5,
+        "bound_limits": [0.001, 0.999],
+        "learning_rate" : 1e-3,
         # Available weight initialization methods: random, zeros, ones
-        "initialize_weights" : "ones",
+        "initialize_weights" : "random",
+        "metrics" : ["mse", "f1_score"],
         ######
         "rprop" : {
             "delta_min" : 0.00001,
@@ -40,19 +43,21 @@ config = {
         "noninverting" : -0.5
     },
     "resistor":{
-        "A" : 500,
-        "B" : 1e4,
-        "C" : 1e4
+        "A" : 3e2,
+        "B" : 3e3,
+        "C" : 1e3
     },
     "memristor":{
         # 0: Biolek, 1: Yakopcic
         "model":  0,
+        # Defines the weight-xo relation: direct, indirect, inverse (This needs to be consistent with the bound limits)
+        "xo_relation": "indirect",
         "parameters": [
             {
             "Ron"   : 100,
-            "Roff"  : 16e3,
-            "D"     : 5, 
-            "uv"    : 1e-5, 
+            "Roff"  : 10e4,
+            "D"     : "10n", 
+            "uv"    : "40f", 
             "p"     : 2
             },
             {
@@ -94,7 +99,7 @@ Gmem TE BE value={{IVRel(V(TE,BE),V(XSV,0))}}
 
 ,
 
-'''* Yakopcic Memristor Model
+'''* Yakopcic Memristor Model Subcircuit
 .subckt memristor TE BE XSV 
 .params a1={a1} a2={a2} b={b} Vp={Vp} Vn={Vn} Ap={Ap} 
 +An={An} xp={xp} xn={xn} alphap={alphap} alphan={alphan} eta={eta} xo={{xo}}

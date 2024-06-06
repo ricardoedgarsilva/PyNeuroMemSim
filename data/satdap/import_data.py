@@ -29,6 +29,30 @@ def import_data(test_size:float):
 
     return x_train, y_train, x_test, y_test
 
+
+def post_processing(y_train, y_test):
+    # List with probabilities, create a one hot encoding list with the highest probability of each row
+
+    def one_hot_encode(y):
+        one_hot_encoded = []
+        for array in y:
+            # Create an array of zeros with the same length as the input array
+            one_hot = np.zeros_like(array)
+            # Get the index of the maximum value in the original array
+            index_of_max = np.argmax(array)
+            # Set the corresponding index in the one-hot array to 1
+            one_hot[index_of_max] = 1
+            # Append the one-hot array to the list
+            one_hot_encoded.append(one_hot)
+        return one_hot_encoded
+    
+    y_train = one_hot_encode(y_train)
+    y_test = one_hot_encode(y_test)
+
+    return y_train, y_test
+
+
+
 if __name__ == "__main__":
     x_train, y_train, x_test, y_test = import_data(0.2)
 

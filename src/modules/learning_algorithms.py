@@ -36,7 +36,7 @@ def backpropagation(config: dict, output_data, target_data):
     - target_data (numpy array): The target output values for the network to learn.
     
     Returns:
-    - list of numpy arrays: The updated weights after applying one backpropagation step.
+    - None: The weights in the configuration dictionary are updated in-place.
     
     Notes:
     - The function assumes that sigmoid derivatives are used in the computation of deltas,
@@ -50,24 +50,17 @@ def backpropagation(config: dict, output_data, target_data):
     error = target_data - output_data[-1]
     delta = error * sigmoid_derivative(output_data[-1], config)
 
-    # Preallocate new_weights for in-place computation
-    new_weights = weights.copy()
-
-    # Precompute sigmoid derivatives for all layers once if called multiple times
-    sig_derivatives = [sigmoid_derivative(layer_output, config) for layer_output in output_data]
-
     # Iterate over layers in reverse order for backpropagation
     for layer in reversed(range(len(weights))):
         # Compute the gradients from the current delta and layer outputs
         gradients = output_data[layer].T.dot(delta)
         # Update weights in-place by subtracting the gradient scaled by the learning rate
-        new_weights[layer] -= learning_rate * gradients
+        weights[layer] -= learning_rate * gradients
 
-        if layer > 0:  # Avoid computation for the input layer where it's not needed
-            # Update delta for the next layer to be processed
-            delta = delta.dot(weights[layer].T) * sig_derivatives[layer]
+        if layer > 0:
+            delta = delta.dot(weights[layer].T) * sigmoid_derivative(output_data[layer], config)
 
-    return new_weights
+    config["simulation"]["weights"] = weights
 
 def rprop(config: dict, output_data, target_data):
     """
@@ -83,7 +76,7 @@ def rprop(config: dict, output_data, target_data):
     - target_data (np.ndarray): Target output data for training.
 
     Returns:
-    - list of np.ndarray: Updated weights after applying the RPROP algorithm.
+    - None: The weights in the configuration dictionary are updated in-place.
     """
     weights = config["simulation"]["weights"]
 
@@ -102,8 +95,6 @@ def rprop(config: dict, output_data, target_data):
     error = target_data - output_data[-1]
     delta = error * sigmoid_derivative(output_data[-1], config)
 
-    new_weights = weights.copy()
-
     for layer in reversed(range(len(weights))):
         gradients = output_data[layer].T.dot(delta)
 
@@ -115,14 +106,14 @@ def rprop(config: dict, output_data, target_data):
         deltas[layer][decrease_indices] = np.maximum(deltas[layer][decrease_indices] * rprop_config["eta_minus"], rprop_config["delta_min"])
 
         weight_update_indices = sign_change >= 0
-        new_weights[layer][weight_update_indices] -= np.sign(gradients[weight_update_indices]) * deltas[layer][weight_update_indices]
-        new_weights[layer][decrease_indices] = weights[layer][decrease_indices]
+        weights[layer][weight_update_indices] -= np.sign(gradients[weight_update_indices]) * deltas[layer][weight_update_indices]
+
 
         last_gradients[layer] = gradients
         if layer > 0:
             delta = delta.dot(weights[layer].T) * sigmoid_derivative(output_data[layer], config)
 
-    return new_weights
+    config["simulation"]["weights"] = weights
 
 def momentum(config: dict, output_data, target_data):
     """
@@ -137,18 +128,17 @@ def momentum(config: dict, output_data, target_data):
     - target_data (np.ndarray): The actual target outputs for the training data.
 
     Returns:
-    - list of np.ndarray: The updated weights after applying momentum.
+    - None: The weights in the configuration dictionary are updated in-place.
     """
     weights = config["simulation"]["weights"]
     learning_rate = config["learning"]["learning_rate"]
-    momentum_config = config["learning"]["momentum"]
-    momentum_gamma = momentum_config["gamma"]
+    momentum_gamma = config["learning"]["momentum"]["gamma"]
 
     # Initialize velocity if it does not exist
-    if "velocity" not in momentum_config:
-        momentum_config["velocity"] = [np.zeros_like(w) for w in weights]
+    if "velocity" not in config["learning"]["momentum"]:
+        config["learning"]["momentum"]["velocity"] = [np.zeros_like(w) for w in weights]
     
-    previous_velocity = momentum_config["velocity"]
+    previous_velocity = config["learning"]["momentum"]["velocity"]
 
     # Compute the error at the output layer
     error = target_data - output_data[-1]
@@ -169,7 +159,8 @@ def momentum(config: dict, output_data, target_data):
     # Update the velocities in the configuration
     config["learning"]["momentum"]["velocity"] = new_velocity[::-1]  # Reverse to maintain correct order
 
-    return new_weights[::-1]  # Reverse the new_weights list to match the original order
+    # Reverse the new_weights list to match the original order
+    config["simulation"]["weights"] = new_weights[::-1]  
 
 def adam(config: dict, output_data, target_data):
     """
@@ -181,9 +172,10 @@ def adam(config: dict, output_data, target_data):
     - target_data (np.ndarray): Target outputs for the training data.
 
     Returns:
-    - list of np.ndarray: Updated weights after applying the Adam optimization.
+    - None: The weights in the configuration dictionary are updated in-place.
     """
     weights = config["simulation"]["weights"]
+    new_weights = []
     learning_rate = config["learning"]["learning_rate"]
     adam_config = config["learning"].setdefault("adam", {})
 
@@ -207,7 +199,7 @@ def adam(config: dict, output_data, target_data):
     error = target_data - output_data[-1]
     delta = error * sigmoid_derivative(output_data[-1], config)
 
-    new_weights = []
+    
 
     for layer in reversed(range(len(weights))):
         gradients = output_data[layer].T.dot(delta)
@@ -227,4 +219,5 @@ def adam(config: dict, output_data, target_data):
             delta = delta.dot(weights[layer].T) * sigmoid_derivative(output_data[layer], config)
 
     # Reverse the new_weights to maintain the original order
-    return new_weights[::-1]
+    config["simulation"]["weights"] = new_weights[::-1]
+

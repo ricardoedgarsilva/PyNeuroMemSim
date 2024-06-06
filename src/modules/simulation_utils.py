@@ -120,3 +120,5 @@ def initialize_weights(config: dict):
             raise ValueError(f"Invalid weight initialization method: {method}")
 
     return weights
+
+

@@ -7,8 +7,8 @@ info = "\n".join([
     "Author: Ricardo E. Silva",
     "Research Group: INESC MN, Lisbon, Portugal",
     "Licence: MIT",
-    "Version: 0.3.9",
-    "Channel: Experimental",
+    "Version: 0.4.0b",
+    "Channel: "Beta",
     f" {10 * '-'} \n\n\n",
     "Configuration:"
 ])
@@ -52,5 +52,7 @@ Changelog:
     - Fix backpropagation delta indexing
     - Add weight statistics
     - Fix print info with learning methods
-       
+• v0.4.0b:
+    - Added multiple new features
+
 """

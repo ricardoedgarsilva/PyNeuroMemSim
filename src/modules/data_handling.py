@@ -78,6 +78,36 @@ def import_data(config: dict):
 
     return None, None, None, None
 
+def scale_data(config: dict, x_train, y_train, x_test, y_test):
+    """
+    Scale the input and output data based on the configuration settings.
+
+    This function scales the input and output data using the specified scaling factors in the configuration dictionary.
+    The scaling factors are applied to the training and testing data, and the scaled data is returned.
+
+    Parameters:
+    config (dict): Configuration dictionary containing the scaling factors.
+    x_train (np.array): The training input data.
+    y_train (np.array): The training output data.
+    x_test (np.array): The test input data.
+    y_test (np.array): The test output data.
+
+    Returns:
+    tuple: A tuple containing four elements - x_train, y_train, x_test, y_test.
+    """
+
+    print("\rScaling data...", end=' ' * 20)
+
+    [x_scale, y_scale] = config["simulation"]["xy_scale"]
+    x_train = x_train * x_scale
+    y_train = y_train * y_scale
+    x_test = x_test * x_scale
+    y_test = y_test * y_scale
+
+    print("\rData scaled successfully!", end=' ' * 20)
+
+    return x_train, y_train, x_test, y_test
+
 def create_inputs(x_train, x_test, config):
     """
     Create and save input files for training and testing using multithreading.
@@ -133,32 +163,6 @@ def create_inputs(x_train, x_test, config):
     except Exception as e:
         print(f"An error occurred while creating input files: {e}")
 
-def calculate_mse(actual, predicted):
-    """
-    Calculate the Mean Squared Error between two arrays.
-    
-    Parameters:
-    - actual (list or numpy array): The actual values.
-    - predicted (list or numpy array): The predicted values.
-    
-    Returns:
-    - float: The mean squared error.
-    """
-
-    print("\rCalculating Mean Squared Error...", end=' ' * 20)
-
-    if len(actual) != len(predicted):
-        raise ValueError(f"Both arrays must have the same length! {len(actual)} and {len(predicted)}")
-    
-    error = 0
-    for a, p in zip(actual, predicted):
-        error += (a - p) ** 2
-    mse_value = error / len(actual)
-
-    print("\rMean Squared Error calculated successfully!", end=' ' * 20)
-
-    return np.mean(mse_value).round(5)
-
 def calculate_time(len_xtrain, len_xtest, config):
     """
     Calculate the total simulation time based on the lengths of training and testing datasets and the simulation timestep.
@@ -207,68 +211,51 @@ def split_data(data, val_len):
 
     return validation_data, training_data
 
-def create_mse_hist(config: dict):
+def apply_postprocessing(config: dict, trn_data, val_data):
     """
-    Initializes a CSV file to store the MSE values across different epochs.
+    Applies a post-processing function to training and validation data. The function is dynamically
+    imported from a module specified in the given configuration dictionary.
 
-    This function takes a configuration dictionary that specifies the directory where
-    the MSE history CSV file should be saved. It then creates or overwrites an existing
-    file named 'mse_hist.csv' in the specified directory with a header for logging
-    MSE values for validation and training during different epochs.
-
-    Args:
-    config (dict): Configuration dictionary with nested dictionary 'simulation' containing:
-                   - 'savedir': A string that specifies the directory path where the CSV
-                                file will be saved.
+    Parameters:
+    - config (dict): Configuration dictionary containing details such as the dataset and the
+                     module name for post-processing.
+    - trn_data: Training data on which the post-processing function will be applied.
+    - val_data: Validation data on which the post-processing function will be applied.
 
     Returns:
-    None
+    - tuple: A tuple containing the post-processed training and validation data. If the
+             post-processing function cannot be imported, it returns the original training
+             and validation data.
+
+    Raises:
+    - ImportError: If the specified post-processing module or function is not found.
+
+    The function first constructs the path to the dataset based on the configuration dictionary.
+    It then attempts to import a module named 'import_data' from this path and retrieves a function
+    named 'post_processing' from the imported module. This function is then called with the
+    training and validation data. If successful, it prints a success message and returns the
+    processed data. In case of an ImportError, it prints an error message and returns the
+    original data.
     """
 
-    print("\rCreating MSE history CSV file...", end=' ' * 20)
+    data_path = os.path.join("..", "data", config["simulation"]["dataset"])
+    sys.path.append(data_path)
 
-    # Extract the directory path from the configuration dictionary
-    savedir = config["simulation"]["savedir"]
+    try:
+        module = importlib.import_module("import_data")
+        impdt = getattr(module, "post_processing")
 
-    # Construct the full file path for the MSE history CSV file
-    csv_path = os.path.join(savedir, "mse_hist.csv")
+        y_train, y_test = impdt(trn_data, val_data)
 
-    with open(csv_path, "w") as f:
-        # Write the header of the CSV file
-        f.write("epoch,mse_val,mse_trn\n")
-    
-    print("\rMSE history CSV file created successfully!", end=' ' * 20)
+        print("Post-processing applied successfully!", end=' ' * 20)
 
-def append_mse_hist(config: dict, epoch: int, mse_val: float, mse_trn: float):
-    """
-    Appends the MSE values for a specific epoch to an existing CSV file.
-
-    This function uses a configuration dictionary to determine the save directory for the CSV file.
-    It appends a new line with the current epoch and corresponding MSE values for validation and 
-    training to 'mse_hist.csv'.
-
-    Args:
-    config (dict): Configuration dictionary with a nested dictionary 'simulation' that includes:
-                   - 'savedir': A string specifying the directory path where the CSV file is located.
-    epoch (int): The current epoch number.
-    mse_val (float): The MSE value for the validation dataset in the current epoch.
-    mse_trn (float): The MSE value for the training dataset in the current epoch.
-
-    Returns:
-    None
-    """
-
-    # Extract the directory path from the configuration dictionary
-    savedir = config["simulation"]["savedir"]
-
-    # Construct the full file path for the MSE history CSV file
-    csv_path = os.path.join(savedir, "mse_hist.csv")
-
-    with open(csv_path, "a") as f:
-        # Write the new epoch data to the CSV file
-        f.write(f"{epoch},{mse_val},{mse_trn}\n")
-
-def bound_weights(weights):
+        return y_train, y_test
+    except ImportError as ie:
+        print(f"No post-processing function found: {ie}")
+        
+        return trn_data, val_data
+        
+def bound_weights(config: dict):
     """
     Bound each weight in a list to be within a specific range using NumPy's clip function.
     
@@ -276,14 +263,14 @@ def bound_weights(weights):
     which is typically done to avoid weights that are exactly 0 or 1 in certain machine learning algorithms.
     
     Parameters:
-    - weights (list of float): The list of weight values to be bounded.
+    - config (dict): Configuration dictionary containing the weights to be bounded.
     
     Returns:
-    - list of float: The list of bounded weights.
+    - None: The weights in the configuration dictionary are updated in-place.
     """
     # Use numpy's clip function to bound each weight within the specified range.
-    # This modifies the list in-place and returns the modified list.
-    return [np.clip(weight, 0.01, 0.99) for weight in weights]
+    [lbond, ubond] = config["learning"]["bound_limits"]
+    config["simulation"]["weights"] = [np.clip(weight, lbond, ubond) for weight in config["simulation"]["weights"]]
 
 def compute_weight_histogram(config: dict):
     """
@@ -314,6 +301,20 @@ def compute_weight_histogram(config: dict):
     bin_size = config["simulation"]["bin_size"]
     bins = np.arange(0, 1+bin_size, bin_size)
     weights = config["simulation"]["weights"]
+
+    match config["memristor"]["xo_relation"]:
+        case "direct":
+            # case for x
+            pass
+        case "indirect":
+            # case for 1-x
+            weights = [1 - layer for layer in weights]
+        case "inverse":
+            # case for 1/x
+            weights = [1 / layer for layer in weights]
+        case _:
+            raise ValueError("Invalid weight-xo relation specified in the configuration.")
+
 
     for layer in weights:
 

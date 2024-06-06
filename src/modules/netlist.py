@@ -107,7 +107,18 @@ class Netlist:
             self.circuit.append(f"\n*** Layer {layer_i} Memristors ***\n")
             for row in range(layer[0]):
                 for col in range(layer[1]):
-                    xo = 1 - config["simulation"]["weights"][layer_i][row][col]
+                    # Determine the xo value based on the relation
+                    match config["memristor"]["xo_relation"]:
+                        case "direct":
+                            xo = config["simulation"]["weights"][layer_i][row][col]
+                        case "indirect":
+                            xo = 1 - config["simulation"]["weights"][layer_i][row][col]
+                        case "inverse":
+                            xo = 1/config["simulation"]["weights"][layer_i][row][col]
+                        case _:
+                            raise ValueError("Invalid xo_relation in config file.")
+
+
                     self.add_memristor(
                         f"M_{layer_i}_{row}_{col}", 
                         f"nin_{layer_i}_{row}", 

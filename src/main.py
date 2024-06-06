@@ -2,6 +2,7 @@ from modules.data_handling import *
 from modules.dependencies import *
 from modules.file_utils import *
 from modules.learning_algorithms import *
+from modules.metrics import *
 from modules.netlist import *
 from modules.plotting import *
 from modules.simulation_utils import *
@@ -11,6 +12,7 @@ if __name__ == "__main__":
 
     # Ensure that the save directory is in the src folder
     ensure_directory_is_src()
+
 
     # Create save directory
     config['simulation']['savedir'] = create_save_directory(
@@ -22,6 +24,10 @@ if __name__ == "__main__":
 
     # Import data and create inputs
     x_train, y_train, x_test, y_test = import_data(config)
+
+    # Perform scaling and create inputs
+    x_train, y_train, x_test, y_test = scale_data(config, x_train, y_train, x_test, y_test)
+
     create_inputs(x_train, x_test, config)
 
     # Calculate simulation time and initialize weights
@@ -29,18 +35,19 @@ if __name__ == "__main__":
     config["simulation"]["weights"] = initialize_weights(config)
     compute_weight_histogram(config)
 
-    # Create MSE history CSV file and weight history HDF5 file
-    create_mse_hist(config)
+    # Create metric history CSV file 
+    create_mtr_hist(config)
 
     # Print configuration and save config.log
     printlog_info(config)
 
     # Initialize list to store time
-    ltime = []
+    config["simulation"]["times"] = []
 
 
     for epoch in range(config["simulation"]["epochs"]):
-        start_time = time.time()
+        config["simulation"]["epoch"] = epoch
+        stime = time.time()
 
         # Print epoch cycle started
         print(f"\rEpoch {epoch} cycle started ....", end=' ')
@@ -57,40 +64,26 @@ if __name__ == "__main__":
 
         # Split data into validation and training data
         val_data, trn_data = split_data(data, len(x_test))
+        
 
-        # Calculate MSE
-        mse_trn = calculate_mse(y_train, trn_data[-1])
-        mse_val = calculate_mse(y_test, val_data[-1])
-
+        # Apply postprocessing if necessary
+        metrics = calculate_metrics(config, trn_data[-1], val_data[-1], y_train, y_test)
 
         # Update weights based on the method
         func = globals().get(config["learning"]["algorithm"])
-        if func:
-            updated_weights = func(
-                config,
-                trn_data,
-                y_train
-            )
-        else:
-            raise ValueError(f"Algorithm {config['learning']['algorithm']} not found!")
+        if func:    func(config,trn_data,y_train)
+        else:   raise ValueError(f"Algorithm {config['learning']['algorithm']} not found!")
 
         # Bound weights if necessary
-        if config["learning"]["bound_weights"]:
-            updated_weights = bound_weights(updated_weights)
-
-
-        config["simulation"]["weights"] = updated_weights
+        if config["learning"]["bound_weights"]: bound_weights(config)
 
         # Compute weight histogram
         compute_weight_histogram(config)
         save_weight_histogram(config)
 
-
-        ltime.append(np.round(time.time() - start_time, 2))
-        etime = np.round(np.mean(ltime) * (config["simulation"]["epochs"] - epoch), 2)	
-        append_mse_hist(config, epoch, mse_trn, mse_val)
-        print(f"\rEpoch {epoch:4}, MSE val: {mse_val:0.5f}, MSE trn: {mse_trn:0.5f}, Time: {ltime[-1]:3.2f} s, Time Remaining: {etime:5.2f} s")
-
+        config["simulation"]["times"].append(np.round(time.time() - stime, 2))
+        append_mtr_hist(config, metrics)
+        print_metric_info(config, metrics)
         
     print("Simulation finished!")
     plot_mse_hist(config)
