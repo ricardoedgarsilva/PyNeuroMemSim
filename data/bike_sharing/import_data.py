@@ -26,12 +26,27 @@ def import_data(test_size:float):
     data = np.concatenate((x, y), axis=1)
     train, test = train_test_split(data, test_size=test_size)
 
-    # Split into x and y 
+    # Split into x and y
     x_train, y_train = train[:, :-y_cols], train[:, -y_cols:]
     x_test, y_test = test[:, :-y_cols], test[:, -y_cols:]
 
+    # Round y_train and y_test to 2 decimal places
+    y_train = np.round(y_train,4)
+    y_test = np.round(y_test,4)
+
 
     return x_train, y_train, x_test, y_test
+
+
+def post_processing(y_train, y_test):
+    # List with probabilities, create a one hot encoding list with the highest probability of each row
+    
+    y_train = np.round(y_train,4)
+    y_test = np.round(y_test,4)
+
+    return y_train, y_test
+
+
 
 if __name__ == "__main__":
     x_train, y_train, x_test, y_test = import_data(0.2)
@@ -40,6 +55,7 @@ if __name__ == "__main__":
     print("Training labels shape:", np.shape(y_train))
     print("Test data shape:", np.shape(x_test))
     print("Test labels shape:", np.shape(y_test))
+
 
 
 

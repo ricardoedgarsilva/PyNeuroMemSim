@@ -1,9 +1,9 @@
 config = {
     "simulation":{
         "save"  : rf"C:\Users\ricar\Downloads\results",
-        "dataset"   : "satdap",
-        "geometry": [[36,24],[24,12],[12,3]],
-        "test_size" : 0.1,
+        "dataset"   : "zoo",
+        "geometry": [[16,8],[8,8]],
+        "test_size" : 0.05,
         "timestep"  : 1e-9,
         "freq"      : 1e9,
         "precision" : 10,
@@ -16,7 +16,7 @@ config = {
         "algorithm" : "backpropagation",
         "bound_weights" : True,
         "bound_limits": [0.001, 0.999],
-        "learning_rate" : 1e-3,
+        "learning_rate" : 1,
         # Available weight initialization methods: random, zeros, ones
         "initialize_weights" : "random",
         "metrics" : ["mse", "f1_score"],
@@ -43,9 +43,9 @@ config = {
         "noninverting" : -0.5
     },
     "resistor":{
-        "A" : 3e2,
+        "A" : 10,
         "B" : 3e3,
-        "C" : 1e3
+        "C" : 1e3,
     },
     "memristor":{
         # 0: Biolek, 1: Yakopcic

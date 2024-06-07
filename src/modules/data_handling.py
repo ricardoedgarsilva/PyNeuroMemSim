@@ -247,11 +247,11 @@ def apply_postprocessing(config: dict, trn_data, val_data):
 
         y_train, y_test = impdt(trn_data, val_data)
 
-        print("Post-processing applied successfully!", end=' ' * 20)
+        print("\rPost-processing applied successfully!", end=' ' * 20)
 
         return y_train, y_test
-    except ImportError as ie:
-        print(f"No post-processing function found: {ie}")
+    except:
+        print(f"\rNo post-processing function found in the module 'import_data'.", end=' ' * 20)
         
         return trn_data, val_data
         

@@ -8,7 +8,7 @@ info = "\n".join([
     "Research Group: INESC MN, Lisbon, Portugal",
     "Licence: MIT",
     "Version: 0.4.0b",
-    "Channel: "Beta",
+    "Channel: Alpha",
     f" {10 * '-'} \n\n\n",
     "Configuration:"
 ])
