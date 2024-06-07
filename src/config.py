@@ -1,34 +1,64 @@
 config = {
     "simulation":{
-        "save"  : rf"C:\Users\ricar\Desktop\results",
-        "dataset"   : "satdap",
-        "geometry": [[36,18],[18,6],[6,3]],
-        "test_size" : 0.1,
-        "timestep"  : 1e-8,
-        "freq"      : 1e8,
+        "save"  : rf"C:\Users\ricar\Downloads\results",
+        "dataset"   : "zoo",
+        "geometry": [[16,8],[8,8]],
+        "test_size" : 0.05,
+        "timestep"  : 1e-9,
+        "freq"      : 1e9,
         "precision" : 10,
-        "epochs"    : 3,
-        "learning_rate" : 6e-4
+        "epochs"    : 50,
+        "bin_size"  : 0.1,
+        "xy_scale"   : [1, 1]
+    },
+    "learning":{
+        # Available algorithms: backpropogation, rprop, momentum, adam
+        "algorithm" : "backpropagation",
+        "bound_weights" : True,
+        "bound_limits": [0.001, 0.999],
+        "learning_rate" : 1,
+        # Available weight initialization methods: random, zeros, ones
+        "initialize_weights" : "random",
+        "metrics" : ["mse", "f1_score"],
+        ######
+        "rprop" : {
+            "delta_min" : 0.00001,
+            "delta_max" : 50,
+            "eta_minus" : 0.5,
+            "eta_plus" : 1.2
+        },
+        ######
+        "momentum" : {
+            "gamma" : 0.9
+        },
+        ######
+        "adam" : {
+            "beta1" : 0.9,
+            "beta2" : 0.999,
+            "epsilon" : 1e-8
+        }
     },
     "opamp":{
         "power" : 1,
-        "noninverting" : 0 # Crashing LTSpice solver if > 0.2
+        "noninverting" : -0.5
     },
     "resistor":{
-        "A" : 50,
-        "B" : 1e3,
-        "C" : 1e3
+        "A" : 10,
+        "B" : 3e3,
+        "C" : 1e3,
     },
     "memristor":{
         # 0: Biolek, 1: Yakopcic
         "model":  0,
+        # Defines the weight-xo relation: direct, indirect, inverse (This needs to be consistent with the bound limits)
+        "xo_relation": "indirect",
         "parameters": [
             {
-            "Ron"   : 800,
-            "Roff"  : 2000,
-            "D"     : 0.2212, 
-            "uv"    : 0.0108, 
-            "p"     : 4.64
+            "Ron"   : 100,
+            "Roff"  : 10e4,
+            "D"     : "10n", 
+            "uv"    : "40f", 
+            "p"     : 2
             },
             {
             "a1" : 0.32,
@@ -42,7 +72,6 @@ config = {
             "xn" : 0.52,
             "alphap" : 0.82,
             "alphan" : 1,
-            "xo" : 0.01,
             "eta" : 1
             }
         ],
@@ -70,7 +99,7 @@ Gmem TE BE value={{IVRel(V(TE,BE),V(XSV,0))}}
 
 ,
 
-'''* Yakopcic Memristor Model
+'''* Yakopcic Memristor Model Subcircuit
 .subckt memristor TE BE XSV 
 .params a1={a1} a2={a2} b={b} Vp={Vp} Vn={Vn} Ap={Ap} 
 +An={An} xp={xp} xn={xn} alphap={alphap} alphan={alphan} eta={eta} xo={{xo}}

@@ -77,6 +77,8 @@ class Netlist:
         config (dict): Configuration dictionary for the circuit.
         """
 
+        print("\rCreating circuit...", end=' ' * 20)
+
         # Clear the circuit
         self.circuit = []
 
@@ -105,12 +107,24 @@ class Netlist:
             self.circuit.append(f"\n*** Layer {layer_i} Memristors ***\n")
             for row in range(layer[0]):
                 for col in range(layer[1]):
+                    # Determine the xo value based on the relation
+                    match config["memristor"]["xo_relation"]:
+                        case "direct":
+                            xo = config["simulation"]["weights"][layer_i][row][col]
+                        case "indirect":
+                            xo = 1 - config["simulation"]["weights"][layer_i][row][col]
+                        case "inverse":
+                            xo = 1/config["simulation"]["weights"][layer_i][row][col]
+                        case _:
+                            raise ValueError("Invalid xo_relation in config file.")
+
+
                     self.add_memristor(
                         f"M_{layer_i}_{row}_{col}", 
                         f"nin_{layer_i}_{row}", 
                         f"nout_{layer_i}_{col}", 
                         f"memristor_{layer_i}_{row}_{col}",
-                        config["simulation"]["weights"][layer_i][row][col]
+                        xo
                     )   
 
         # Add the comparators to each layer
@@ -166,6 +180,8 @@ class Netlist:
         self.add_save(config)
         self.add_end()
 
+        print("\rCircuit created!", end=' ' * 20)
+
     def save_net(self, config):
         """
         Save the constructed netlist to a file.
@@ -174,12 +190,16 @@ class Netlist:
         config (dict): Configuration dictionary for the circuit.
         """
 
+        print("\rSaving netlist circuit file...", end=' ' * 20)
         savedir = config['simulation']['savedir']
 
         try:
             with open(os.path.join(savedir, "circuit.cir"), "w") as file:
                 for line in self.circuit:
                     file.write(f"{line}\n")
+
+            print("\rNetlist saved!", end=' ' * 20)
+
         except OSError as e:
             print(f"Error saving netlist: {e}")
 

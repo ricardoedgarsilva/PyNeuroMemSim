@@ -6,29 +6,30 @@ from sklearn.model_selection import train_test_split
 
 def import_data(test_size:float):  
     # fetch dataset 
-    data = fetch_ucirepo(id=697)
+    data = fetch_ucirepo(id=111)
 
     # data (as pandas dataframes) 
     x = data.data.features 
     y = data.data.targets
 
-    # Convert y to one-hot encoding
-    y = pd.get_dummies(y).astype(int)
 
-    # Normalize x to [0, 1] considering negative values
+    # Nomalize x and y to [0, 1] considering negative values
     x = (x - x.min()) / (x.max() - x.min())
-  
+
+    # Convert y to one-hot encoding
+    y = np.reshape(np.eye(8)[y.astype(int)], (101,8))
+
     # merge x and y into data array in order to split into train and test sets
     data = np.concatenate((x, y), axis=1)
-    train, test = train_test_split(data, test_size=test_size)
+    train, test = train_test_split(data, test_size=test_size, shuffle=True)
 
+    
     # Split into x and y 
-    x_train, y_train = train[:, :-3], train[:, -3:]
-    x_test, y_test = test[:, :-3], test[:, -3:]
+    x_train, y_train = train[:, :-8], train[:, -8:]
+    x_test, y_test = test[:, :-8], test[:, -8:]
 
-
+    
     return x_train, y_train, x_test, y_test
-
 
 def post_processing(y_train, y_test):
     # List with probabilities, create a one hot encoding list with the highest probability of each row
@@ -52,16 +53,21 @@ def post_processing(y_train, y_test):
     return y_train, y_test
 
 
-
 if __name__ == "__main__":
-    x_train, y_train, x_test, y_test = import_data(0.2)
+    # This is to test the data
+    x_train, y_train, x_test, y_test = import_data(0.1)
 
     print("Training data shape:", np.shape(x_train))
     print("Training labels shape:", np.shape(y_train))
     print("Test data shape:", np.shape(x_test))
     print("Test labels shape:", np.shape(y_test))
 
-    # Check for negative values
+    # y_test = [np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])]
+    # y_train = [np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])]
+
+    # y_train, y_test = post_processing(y_train, y_test)
+    # print("Training labels shape:", y_train)
+    # print("Test labels shape:", y_train)
 
 
 

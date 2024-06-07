@@ -5,26 +5,34 @@ from sklearn.model_selection import train_test_split
   
 
 def import_data(test_size:float):  
+    
     # fetch dataset 
-    data = fetch_ucirepo(id=697)
+    data = fetch_ucirepo(id=275)
 
     # data (as pandas dataframes) 
     x = data.data.features 
     y = data.data.targets
+    y_cols = len(y.columns)
 
-    # Convert y to one-hot encoding
-    y = pd.get_dummies(y).astype(int)
+    # Remove second column (dteday) from x
+    x = x.drop(columns=['dteday'])
 
-    # Normalize x to [0, 1] considering negative values
+
+    # Normalize x and y to [0, 1] considering negative values
     x = (x - x.min()) / (x.max() - x.min())
-  
+    y = (y - y.min()) / (y.max() - y.min())
+
     # merge x and y into data array in order to split into train and test sets
     data = np.concatenate((x, y), axis=1)
     train, test = train_test_split(data, test_size=test_size)
 
-    # Split into x and y 
-    x_train, y_train = train[:, :-3], train[:, -3:]
-    x_test, y_test = test[:, :-3], test[:, -3:]
+    # Split into x and y
+    x_train, y_train = train[:, :-y_cols], train[:, -y_cols:]
+    x_test, y_test = test[:, :-y_cols], test[:, -y_cols:]
+
+    # Round y_train and y_test to 2 decimal places
+    y_train = np.round(y_train,4)
+    y_test = np.round(y_test,4)
 
 
     return x_train, y_train, x_test, y_test
@@ -32,22 +40,9 @@ def import_data(test_size:float):
 
 def post_processing(y_train, y_test):
     # List with probabilities, create a one hot encoding list with the highest probability of each row
-
-    def one_hot_encode(y):
-        one_hot_encoded = []
-        for array in y:
-            # Create an array of zeros with the same length as the input array
-            one_hot = np.zeros_like(array)
-            # Get the index of the maximum value in the original array
-            index_of_max = np.argmax(array)
-            # Set the corresponding index in the one-hot array to 1
-            one_hot[index_of_max] = 1
-            # Append the one-hot array to the list
-            one_hot_encoded.append(one_hot)
-        return one_hot_encoded
     
-    y_train = one_hot_encode(y_train)
-    y_test = one_hot_encode(y_test)
+    y_train = np.round(y_train,4)
+    y_test = np.round(y_test,4)
 
     return y_train, y_test
 
@@ -61,7 +56,8 @@ if __name__ == "__main__":
     print("Test data shape:", np.shape(x_test))
     print("Test labels shape:", np.shape(y_test))
 
-    # Check for negative values
+
+
 
 
 
