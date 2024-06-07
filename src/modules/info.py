@@ -7,8 +7,8 @@ info = "\n".join([
     "Author: Ricardo E. Silva",
     "Research Group: INESC MN, Lisbon, Portugal",
     "Licence: MIT",
-    "Version: 0.4.0b",
-    "Channel: Alpha",
+    "Version: 0.4.0",
+    "Channel: Stable",
     f" {10 * '-'} \n\n\n",
     "Configuration:"
 ])
@@ -54,5 +54,7 @@ Changelog:
     - Fix print info with learning methods
 • v0.4.0b:
     - Added multiple new features
+    - Added README.md
+    - Added environment.yml
 
 """
